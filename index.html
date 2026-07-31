@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>가이드앱 빌더 — 현장 안내 앱을 설계하는 연습장</title>
+<title>가이드앱 빌더 — 현장 안내 앱을 설계하는 인터랙티브 랩</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@500;700;800&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
+/* ══════════════ 토큰 ══════════════ */
 :root{
   --ground:#16232B; --ground-2:#1E303A; --ground-3:#263B47;
   --line:#33505E; --line-soft:#2A4453;
@@ -21,12 +22,13 @@ body{font-family:'Pretendard Variable',Pretendard,sans-serif;background:var(--gr
 :focus-visible{outline:2px solid var(--route);outline-offset:2px}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
-header{padding:24px 24px 16px;border-bottom:1px solid var(--line);display:flex;align-items:flex-end;justify-content:space-between;gap:22px;flex-wrap:wrap}
-.brand h1{font-family:'Gothic A1',sans-serif;font-weight:800;font-size:clamp(21px,4vw,29px);letter-spacing:-.03em}
+/* ══════════════ 상단 바 ══════════════ */
+header{padding:16px 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:22px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.brand .logo{width:34px;height:34px;border-radius:50%;border:2px solid var(--route);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-weight:700;color:var(--route);flex:0 0 auto}
+.brand h1{font-family:'Gothic A1',sans-serif;font-weight:800;font-size:clamp(17px,3vw,22px);letter-spacing:-.03em}
 .brand h1 em{font-style:normal;color:var(--route)}
-.brand p{margin-top:7px;font-size:13.5px;color:var(--txt-2);max-width:620px;line-height:1.6}
-.brand p b{color:#CFE3E0;font-weight:700}
-
+.brand .sub{display:block;margin-top:2px;font-size:11.5px;font-weight:400;color:var(--txt-3);letter-spacing:0}
 .metro{flex:0 0 auto;min-width:290px}
 .metro-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:11px}
 .metro-top span{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:var(--txt-3)}
@@ -37,27 +39,69 @@ header{padding:24px 24px 16px;border-bottom:1px solid var(--line);display:flex;a
 .stn{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:6px;width:14px}
 .stn i{width:14px;height:14px;border-radius:50%;border:2px solid var(--line);background:var(--ground);display:block;transition:.3s}
 .stn.on i{background:var(--route);border-color:var(--route)}
+.stn.auto i{background:transparent;border-style:dashed;border-color:var(--route-dim)}
 .stn u{font-family:'Space Mono',monospace;font-size:9.5px;color:var(--txt-3);text-decoration:none;white-space:nowrap;transition:.3s}
 .stn.on u{color:var(--route)}
-.metro-hint{margin-top:12px;font-size:11.5px;color:var(--txt-3);min-height:16px}
+.metro-hint{margin-top:10px;font-size:11.5px;color:var(--txt-3);min-height:16px}
 
-.wrap{display:grid;grid-template-columns:minmax(400px,47%) 1fr;align-items:start}
-@media(max-width:980px){.wrap{grid-template-columns:1fr}}
-.panel{padding:24px 24px 60px;border-right:1px solid var(--line)}
-.route{position:relative;padding-left:32px}
-.route::before{content:"";position:absolute;left:10px;top:18px;bottom:24px;width:2px;background:var(--line)}
-.route .rfill{position:absolute;left:10px;top:18px;width:2px;height:0;background:var(--route);transition:height .45s cubic-bezier(.2,.8,.2,1)}
+/* ══════════════ 3단 레이아웃 ══════════════ */
+.layout{display:grid;grid-template-columns:232px minmax(400px,1fr) minmax(400px,42%);align-items:start}
 
-.step{position:relative;margin-bottom:14px;border:1px solid var(--line);border-radius:13px;background:var(--ground-2);overflow:hidden}
-.step .dot{position:absolute;left:-31px;top:17px;z-index:3;width:20px;height:20px;border-radius:50%;border:2px solid var(--line);background:var(--ground);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;color:var(--txt-3);transition:.25s}
-.step.done .dot{background:var(--route);border-color:var(--route);color:#0E1F26}
-.step.guard .dot{border-color:var(--stamp-dim)}
-.step.guard.done .dot{background:var(--stamp);border-color:var(--stamp)}
-.step-h{display:flex;flex-direction:column;gap:3px;padding:15px 17px 4px}
-.step-h .t{font-family:'Gothic A1',sans-serif;font-weight:700;font-size:15.5px;letter-spacing:-.01em}
-.step-h .d{font-size:12px;color:var(--txt-3);line-height:1.5}
-.step-b{padding:11px 17px 17px}
+/* ── 왼쪽: 코스맵 ── */
+.cmap{position:sticky;top:0;max-height:100vh;overflow-y:auto;padding:20px 14px 26px;border-right:1px solid var(--line)}
+.cmap-cap{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--txt-3)}
+.cmap-sub{font-size:12.5px;color:var(--txt-2);margin:4px 0 16px;line-height:1.5}
+.cmlist{position:relative}
+.cmlist::before{content:"";position:absolute;left:20px;top:16px;bottom:16px;width:2px;background:var(--line)}
+.cmi{position:relative;z-index:1;display:flex;gap:11px;align-items:flex-start;padding:9px 8px;border-radius:10px;cursor:pointer;border:1px solid transparent;transition:.15s;width:100%;background:none;font-family:inherit;text-align:left;color:var(--txt)}
+.cmi:hover{background:var(--ground-2)}
+.cmi.act{background:var(--ground-2);border-color:var(--line-soft)}
+.cmi .num{flex:0 0 auto;width:27px;height:27px;border-radius:50%;border:2px solid var(--line);background:var(--ground);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;color:var(--txt-3);transition:.25s}
+.cmi.done .num{background:var(--route);border-color:var(--route);color:#0E1F26}
+.cmi.guard .num{border-color:var(--stamp-dim)}
+.cmi.guard.done .num{background:var(--stamp);border-color:var(--stamp)}
+.cmi.auto .num{background:transparent;border-style:dashed;border-color:var(--route-dim);color:var(--route-dim)}
+.cmap-note{margin-top:10px;font-size:10.5px;color:var(--txt-3);line-height:1.6}
+.cmi .tt{font-weight:700;font-size:13px;padding-top:2px}
+.cmi.act .tt{color:#fff}
+.cmi .dd{font-size:11px;color:var(--txt-3);margin-top:2px;line-height:1.45}
+.cmap .util{margin-top:18px;padding-top:16px;border-top:1px dashed var(--line);display:flex;flex-direction:column;gap:6px}
+.cmap .util .chip{width:100%;text-align:left}
 
+/* ── 가운데: 스테이지 ── */
+.stage{padding:22px 26px 46px;min-width:0}
+.st-page{display:none}
+.st-page.on{display:block;animation:pvFade .3s ease-out}
+.st-head .bdgs{display:flex;gap:7px;margin-bottom:12px}
+.bdg{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.08em;border:1px solid var(--line);border-radius:5px;padding:3px 9px;color:var(--txt-2)}
+.bdg.teal{color:var(--route);border-color:var(--route-dim)}
+.bdg.warm{color:var(--stamp);border-color:var(--stamp-dim)}
+.st-head h2{font-family:'Gothic A1',sans-serif;font-weight:800;font-size:clamp(19px,3.4vw,25px);letter-spacing:-.03em}
+.st-head .lead{margin-top:7px;font-size:13.5px;color:var(--txt-2);line-height:1.6}
+.goal{margin-top:13px;border-left:3px solid var(--stamp);padding:2px 0 2px 12px;font-size:12.5px;line-height:1.65;color:#F0C4AF}
+.goal b{color:var(--stamp);font-family:'Gothic A1',sans-serif;margin-right:8px}
+.st-tabs{display:flex;margin:18px 0 16px;border-bottom:1px solid var(--line)}
+.st-tabs button{font-family:inherit;background:none;border:none;color:var(--txt-3);font-size:13.5px;font-weight:700;padding:10px 17px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:.15s}
+.st-tabs button:hover{color:var(--txt-2)}
+.st-tabs button.on{color:var(--route);border-bottom-color:var(--route)}
+.st-tabs button.ok{color:#8FD9CE}
+.st-pane{display:none}
+.st-pane.on{display:block}
+.st-pane.work,.st-pane.concept,.st-pane.check{background:var(--ground-2);border:1px solid var(--line);border-radius:14px;padding:18px}
+.st-pane.concept{font-size:13px;color:#B3C7D0;line-height:1.9}
+.st-pane.concept b{color:var(--route)}
+.st-pane.concept .h3{font-family:'Gothic A1',sans-serif;font-size:14px;font-weight:700;color:#DCE7EB;margin:16px 0 7px}
+.st-pane.concept .h3:first-child{margin-top:0}
+.st-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px}
+.st-nav button{font-family:inherit;font-weight:800;font-size:13.5px;border-radius:9px;padding:11px 18px;cursor:pointer;transition:.15s}
+#navPrev{background:var(--ground-2);border:1px solid var(--line-soft);color:#B3C7D0}
+#navPrev:hover{border-color:var(--route)}
+#navPrev:disabled{opacity:.32;cursor:default;border-color:var(--line-soft)}
+#navNext{background:var(--route);border:none;color:#0E1F26}
+#navNext:hover{filter:brightness(1.08)}
+#navPos{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:var(--txt-3)}
+
+/* ══════════════ 공용 위젯 ══════════════ */
 .field{margin-bottom:14px}
 .field>label{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
 .field .name{font-weight:700;font-size:13.5px}
@@ -69,7 +113,6 @@ input::placeholder,textarea::placeholder{color:#5A7788}
 .quad{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 @media(max-width:520px){.quad{grid-template-columns:1fr}}
 .quad .qcell label{display:block;font-size:11px;color:var(--txt-3);margin-bottom:4px;font-family:'Space Mono',monospace;letter-spacing:.04em}
-
 .group{margin-bottom:14px}
 .glabel{display:flex;align-items:baseline;gap:7px;margin-bottom:7px}
 .gname{font-weight:700;font-size:13.5px}
@@ -83,32 +126,17 @@ input::placeholder,textarea::placeholder{color:#5A7788}
 .preset{font-family:inherit;font-size:12.5px;font-weight:600;color:#C3D6DD;background:var(--ground-3);border:1px solid var(--line-soft);border-radius:20px;padding:8px 15px;cursor:pointer;transition:.18s}
 .preset:hover{border-color:var(--route);color:#fff}
 .preset.on{background:var(--route);border-color:var(--route);color:#0E1F26}
-.util{display:flex;gap:7px;flex-wrap:wrap;margin:2px 0 13px}
-.util .chip{font-size:12px;padding:6px 11px}
-
 /* 테마 칩 — 색 동그라미가 붙음 */
 .theme{display:flex;align-items:center;gap:7px;font-family:inherit;font-size:12.5px;font-weight:600;color:#C3D6DD;background:var(--ground-3);border:1px solid var(--line-soft);border-radius:8px;padding:6px 11px 6px 7px;cursor:pointer;transition:.15s}
 .theme:hover{border-color:var(--route)}
 .theme.on{border-color:var(--route);background:rgba(78,195,180,.12);color:#fff}
 .theme .sw2{display:flex;gap:3px}
 .theme .sw2 i{width:13px;height:13px;border-radius:50%;display:block;border:1px solid rgba(255,255,255,.25)}
-
 .picker{display:flex;gap:10px;flex-wrap:wrap;margin-top:9px}
 .picker div{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--txt-2)}
 .picker input[type=color]{width:38px;height:30px;padding:2px;border:1px solid var(--line-soft);border-radius:7px;background:var(--ground-3);cursor:pointer}
 .picker code{font-family:'Space Mono',monospace;font-size:11px;color:var(--txt-3)}
-
-/* 색 미리보기 */
-.preview{margin-top:11px;border:1px solid var(--line-soft);border-radius:10px;overflow:hidden;background:#fff}
-.pv-bar{padding:8px 11px;display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700}
-.pv-body{padding:10px 11px 12px;display:flex;flex-direction:column;gap:7px}
-.pv-pills{display:flex;gap:5px}
-.pv-pills span{font-size:10px;font-weight:700;padding:4px 9px}
-.pv-card{padding:9px 10px;border:1px solid #E5E7EB;background:#fff}
-.pv-card b{display:block;font-size:11.5px;margin-bottom:3px}
-.pv-card small{font-size:10.5px;color:#6B7280}
-.pv-cap{font-size:11px;color:var(--txt-3);margin-top:7px;line-height:1.6}
-
+/* 접이식 목록 */
 .fold{border:1px solid var(--line-soft);border-radius:9px;background:var(--ground-3);margin-bottom:6px;overflow:hidden}
 .fold>summary{list-style:none;cursor:pointer;padding:10px 11px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;font-weight:700;color:#DCE7EB;transition:.15s}
 .fold>summary:hover{color:#fff}
@@ -126,23 +154,9 @@ input::placeholder,textarea::placeholder{color:#5A7788}
 .foldbar button.on{background:var(--route);border-color:var(--route);color:#0E1F26}
 code.term{font-family:'Space Mono',monospace;font-size:10px;color:#8FD9CE;background:rgba(78,195,180,.13);border:1px solid var(--route-dim);border-radius:4px;padding:1px 5px;margin-left:5px;white-space:nowrap}
 .chip.on code.term{color:#0E1F26;background:rgba(255,255,255,.45);border-color:rgba(0,0,0,.15)}
-.pv-prog{height:8px;border-radius:999px;background:#E5E7EB;overflow:hidden}
-.pv-prog i{display:block;height:100%;width:0;border-radius:999px}
-.pv-replay{margin-top:9px;font-family:inherit;font-size:11.5px;font-weight:700;color:#B3C7D0;background:var(--ground-3);border:1px solid var(--line-soft);border-radius:7px;padding:6px 12px;cursor:pointer}
-.pv-replay:hover{border-color:var(--route);color:#fff}
-@keyframes pvFade{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
-@keyframes pvSlide{from{transform:translateY(30px);opacity:.15}to{transform:none;opacity:1}}
-@keyframes pvShake{0%,100%{transform:none}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
-.pv-fade{animation:pvFade .45s ease-out}
-.pv-slide{animation:pvSlide .5s cubic-bezier(.2,.8,.2,1)}
-.pv-shake{animation:pvShake .4s ease-in-out}
-.pv-press:active{transform:scale(.93)}
-.riskmap{margin-top:10px;font-size:12px;color:#A9D6CF;line-height:1.75;border-left:2px solid var(--route-dim);padding-left:11px;display:none}
-.riskmap.show{display:block}
-.riskmap b{color:#D3EDE8}
-
+/* 토글 스위치 */
 .toggles{display:flex;flex-direction:column;gap:6px}
-.tog{display:flex;align-items:flex-start;gap:9px;background:var(--ground-3);border:1px solid var(--line-soft);border-radius:8px;padding:9px 11px;cursor:pointer;transition:.15s;font-size:12.8px;line-height:1.55;color:#DCE7EB}
+.tog{display:flex;align-items:flex-start;gap:9px;background:var(--ground-3);border:1px solid var(--line-soft);border-radius:8px;padding:9px 11px;cursor:pointer;transition:.15s;font-size:12.8px;line-height:1.55;color:#DCE7EB;width:100%;font-family:inherit;text-align:left}
 .tog:hover{border-color:var(--line)}
 .tog .sw{flex:0 0 auto;width:32px;height:18px;border-radius:10px;background:#3A5666;position:relative;transition:.2s;margin-top:1px}
 .tog .sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#8CA8B6;transition:.2s}
@@ -152,21 +166,35 @@ code.term{font-family:'Space Mono',monospace;font-size:10px;color:#8FD9CE;backgr
 .tog.off{opacity:.42}
 .tog.off .txt{text-decoration:line-through;text-decoration-color:#6E8B9B}
 .tog .txt small{display:block;font-size:11px;color:var(--txt-3);margin-top:2px;text-decoration:none}
-
+/* 안내 상자 */
 .why{background:rgba(228,115,74,.09);border:1px solid var(--stamp-dim);border-radius:9px;padding:11px 13px;font-size:12.3px;line-height:1.7;color:#F0C4AF;margin-bottom:13px}
 .why b{color:var(--stamp)}
 .tip{background:rgba(78,195,180,.08);border:1px solid var(--route-dim);border-radius:9px;padding:10px 12px;font-size:12.2px;line-height:1.7;color:#AEDCD5;margin-bottom:12px}
 .tip b{color:var(--route)}
+.riskmap{margin-top:10px;font-size:12px;color:#A9D6CF;line-height:1.75;border-left:2px solid var(--route-dim);padding-left:11px;display:none}
+.riskmap.show{display:block}
+.riskmap b{color:#D3EDE8}
+/* 비교 표 · 네 칸 그리드 (개념 탭) */
+.cmp{width:100%;border-collapse:collapse;font-size:12.5px}
+.cmp th,.cmp td{border:1px solid var(--line-soft);padding:7px 9px;text-align:left;vertical-align:top;line-height:1.5}
+.cmp th{background:var(--ground-3);color:#A7DDD4;font-weight:700}
+.cmp td:first-child{color:var(--txt-2);font-weight:600;white-space:nowrap}
+.cmp td b{color:var(--route)}
+.four{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:9px}
+@media(max-width:760px){.four{grid-template-columns:1fr 1fr}}
+.four div{background:var(--ground-3);border:1px solid var(--line-soft);border-radius:9px;padding:10px;font-size:12px;line-height:1.6;color:#B3C7D0}
+.four div b{display:block;color:var(--route);font-family:'Gothic A1',sans-serif;font-size:13px;margin-bottom:3px}
 
-.doc-side{background:var(--paper);color:var(--doc-ink);display:flex;flex-direction:column;position:sticky;top:0;max-height:100vh;overflow-y:auto}
-@media(max-width:980px){.doc-side{position:static;max-height:none}}
-#peekBtn{display:none;font-family:inherit}
-@media(max-width:980px){
-  #peekBtn{display:flex;position:fixed;bottom:14px;right:14px;z-index:60;background:var(--route);color:#0E1F26;border:none;border-radius:24px;padding:13px 18px;font-weight:700;font-size:14px;box-shadow:0 4px 16px rgba(0,0,0,.45);cursor:pointer;align-items:center;gap:6px}
-  .doc-side.open{position:fixed;inset:0;z-index:50;max-height:none;overflow-y:auto}
-}
-.doc-bar{position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--paper-line);padding:11px 24px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.doc-bar .fname{font-family:'Space Mono',monospace;font-size:12.5px;color:var(--doc-dim)}
+/* ══════════════ 오른쪽: 문서 패널 ══════════════ */
+.doc-side{background:var(--paper);color:var(--doc-ink);display:flex;flex-direction:column;position:sticky;top:0;max-height:100vh;overflow-y:auto;border-left:1px solid var(--line)}
+.aside-tabs{position:sticky;top:0;z-index:7;display:flex;gap:4px;background:var(--paper);border-bottom:1px solid var(--paper-line);padding:10px 16px 0}
+.aside-tabs button{font-family:inherit;font-size:12.5px;font-weight:700;border:1px solid var(--paper-line);border-bottom:none;background:var(--paper-2);color:#6B6558;padding:8px 15px;border-radius:9px 9px 0 0;cursor:pointer;transition:.15s}
+.aside-tabs button.on{background:var(--ground);color:#fff;border-color:var(--ground)}
+.aside-tabs button.dot::after{content:" ●";color:var(--route);font-size:8px;vertical-align:2px}
+.apanel{display:none}
+.apanel.on{display:block}
+.doc-bar{position:sticky;top:45px;z-index:5;background:var(--paper);border-bottom:1px solid var(--paper-line);padding:11px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.doc-bar .fname{font-family:'Space Mono',monospace;font-size:12px;color:var(--doc-dim)}
 .doc-bar .fname b{color:var(--doc-ink)}
 .doc-bar .count{font-family:'Space Mono',monospace;font-size:11.5px;color:#6B6558;background:var(--paper-2);border-radius:12px;padding:3px 10px}
 .doc-bar .btns{display:flex;gap:8px}
@@ -179,7 +207,7 @@ code.term{font-family:'Space Mono',monospace;font-size:10px;color:#8FD9CE;backgr
 .copy.done{background:var(--route-dim)}
 .dl{background:transparent;color:var(--ground);border:1.5px solid var(--ground)}
 .dl:hover{background:var(--paper-2)}
-.doc{flex:1;padding:26px 30px 60px;font-family:'Gowun Dodum',serif;font-size:13.5px;line-height:1.9;white-space:pre-wrap;word-break:break-word;max-width:780px}
+.doc{padding:24px 26px 40px;font-family:'Gowun Dodum',serif;font-size:13.5px;line-height:1.9;white-space:pre-wrap;word-break:break-word}
 .doc .h1{font-family:'Gothic A1',sans-serif;font-size:19px;font-weight:800;letter-spacing:-.02em}
 .doc .h2{font-family:'Gothic A1',sans-serif;font-size:14.5px;font-weight:700;margin-top:6px}
 .doc .rule{color:#CFC7B4}
@@ -192,36 +220,81 @@ code.term{font-family:'Space Mono',monospace;font-size:10px;color:#8FD9CE;backgr
 .doc .gate{background:#F1E6D4;border:1px dashed var(--route-dim);border-radius:8px;padding:9px 12px;margin:7px 0;color:#3D5B56;font-size:12.5px;line-height:1.7}
 .doc .lockbox{background:#F6E3D9;border:1px solid var(--stamp-dim);border-radius:8px;padding:9px 12px;margin:7px 0;color:#7A3D22;font-size:12.5px;line-height:1.7}
 .doc .code{background:#EDE6D6;border:1px solid var(--paper-line);border-radius:8px;padding:11px 13px;margin:7px 0;font-family:'Space Mono',monospace;font-size:11.5px;line-height:1.65;color:#3D3A32;overflow-x:auto;white-space:pre}
-.doc-note{padding:0 30px 34px;font-size:12.5px;color:#6B6558;line-height:1.75;max-width:780px}
+.doc-note{padding:0 26px 30px;font-size:12.5px;color:#6B6558;line-height:1.75}
 .doc-note b{color:var(--doc-ink)}
+/* 복사 후 설정 저장 유도 */
+.copy-nudge{margin:10px 20px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#F1E6D4;border:1px dashed var(--route-dim);border-radius:9px;padding:9px 12px;font-size:12px;line-height:1.6;color:#3D5B56}
+.copy-nudge[hidden]{display:none}
+.copy-nudge b{color:#2E6B62}
+.copy-nudge .cn-save{font-family:inherit;font-size:11.5px;font-weight:700;background:var(--ground);color:#fff;border:none;border-radius:7px;padding:6px 11px;cursor:pointer}
+.copy-nudge .cn-x{font-family:inherit;font-size:11px;background:none;border:none;color:#8A8578;cursor:pointer;margin-left:auto}
 
-.extras{margin:10px 24px 26px;border:1px dashed var(--line);border-radius:12px;padding:12px 14px 14px}
-.extras-tabs{display:flex;gap:6px;flex-wrap:wrap}
-.etab{font-family:inherit;font-size:12.5px;font-weight:600;color:#B3C7D0;background:var(--ground-2);border:1px solid var(--line-soft);border-radius:8px;padding:7px 12px;cursor:pointer;transition:.15s}
-.etab:hover{border-color:var(--route)}
-.etab.on{background:var(--route);border-color:var(--route);color:#0E1F26}
-.epanel{display:none;font-size:13px;color:#B3C7D0;line-height:1.9;padding:13px 4px 2px;border-top:1px dashed var(--line);margin-top:11px}
-.epanel.on{display:block}
-.epanel b{color:var(--route)}
-.cmp{width:100%;border-collapse:collapse;font-size:12.5px}
-.cmp th,.cmp td{border:1px solid var(--line-soft);padding:7px 9px;text-align:left;vertical-align:top;line-height:1.5}
-.cmp th{background:var(--ground-3);color:#A7DDD4;font-weight:700}
-.cmp td:first-child{color:var(--txt-2);font-weight:600;white-space:nowrap}
-.cmp td b{color:var(--route)}
-.four{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:9px}
-@media(max-width:640px){.four{grid-template-columns:1fr 1fr}}
-.four div{background:var(--ground-2);border:1px solid var(--line-soft);border-radius:9px;padding:10px;font-size:12px;line-height:1.6;color:#B3C7D0}
-.four div b{display:block;color:var(--route);font-family:'Gothic A1',sans-serif;font-size:13px;margin-bottom:3px}
+/* 미리보기 탭 */
+#ap_pv{padding:22px 16px 28px}
+.pv-head{font-family:'Gothic A1',sans-serif;font-size:13.5px;font-weight:700;color:#4C4739;margin-bottom:12px;text-align:center}
+.phone{max-width:340px;margin:0 auto;border:9px solid #22333D;border-radius:24px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.16);background:#fff}
+.preview{overflow:hidden;background:#fff}
+.pv-bar{padding:8px 11px;display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700}
+.pv-body{padding:10px 11px 12px;display:flex;flex-direction:column;gap:7px}
+.pv-pills{display:flex;gap:5px}
+.pv-pills span{font-size:10px;font-weight:700;padding:4px 9px}
+.pv-card{padding:9px 10px;border:1px solid #E5E7EB;background:#fff}
+.pv-card b{display:block;font-size:11.5px;margin-bottom:3px}
+.pv-card small{font-size:10.5px;color:#6B7280}
+.pv-prog{height:8px;border-radius:999px;background:#E5E7EB;overflow:hidden}
+.pv-prog i{display:block;height:100%;width:0;border-radius:999px}
+.pv-replay{display:block;margin:12px auto 0;font-family:inherit;font-size:11.5px;font-weight:700;color:#4C4739;background:var(--paper-2);border:1px solid var(--paper-line);border-radius:7px;padding:7px 14px;cursor:pointer}
+.pv-replay:hover{border-color:var(--route-dim)}
+.pv-cap{font-size:11.5px;color:#6B6558;margin-top:11px;line-height:1.65;text-align:center;max-width:340px;margin-left:auto;margin-right:auto}
+@keyframes pvFade{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+@keyframes pvSlide{from{transform:translateY(30px);opacity:.15}to{transform:none;opacity:1}}
+@keyframes pvShake{0%,100%{transform:none}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.pv-fade{animation:pvFade .45s ease-out}
+.pv-slide{animation:pvSlide .5s cubic-bezier(.2,.8,.2,1)}
+.pv-shake{animation:pvShake .4s ease-in-out}
+.pv-press:active{transform:scale(.93)}
+/* 모바일 전용 미니 미리보기 (2번 역 색 고르기 아래) */
+.minipv{display:none;margin-top:10px;border:1px solid var(--line-soft);border-radius:10px;overflow:hidden}
+.minipv .mp-row{display:flex;gap:7px;align-items:center;padding:8px 10px}
+.minipv .mp-cap{font-size:10.5px;color:#6B7280;padding:0 10px 8px}
+@media(max-width:980px){.minipv{display:block}}
+
+/* 조작 기록 */
+.actlog{border-top:1px dashed var(--paper-line);padding:14px 20px 22px}
+.al-cap{font-size:11.5px;font-weight:800;color:#4C4739;margin-bottom:8px}
+.al-cap i{font-style:normal;color:var(--route-dim);margin-right:6px}
+.lrow{display:flex;gap:10px;font-size:12px;color:#6B6558;line-height:1.8}
+.lrow:first-child{color:var(--doc-ink);font-weight:600}
+.lrow .ln{font-family:'Space Mono',monospace;font-size:9.5px;color:#AFA898;width:28px;flex:0 0 auto;padding-top:4px}
+.lempty{font-size:12px;color:#AFA898;font-style:italic}
+
+/* ══════════════ 반응형 ══════════════ */
+#peekBtn{display:none;font-family:inherit}
 footer{padding:16px 24px 28px;border-top:1px solid var(--line);font-size:12px;color:var(--txt-3);line-height:1.7}
 footer b{color:var(--txt-2)}
+@media(max-width:1150px){
+  .layout{grid-template-columns:minmax(0,1fr) minmax(380px,44%)}
+  .cmap{grid-column:1/-1;position:static;max-height:none;border-right:none;border-bottom:1px solid var(--line);padding:12px 16px}
+  .cmap-sub{margin-bottom:10px}
+  .cmlist{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+  .cmlist::before{display:none}
+  .cmi{flex:0 0 auto;width:auto;border:1px solid var(--line-soft);border-radius:20px;padding:7px 13px;align-items:center;gap:8px}
+  .cmap-note{display:none}
+  .cmi .num{width:21px;height:21px;font-size:9px}
+  .cmi .dd{display:none}
+  .cmap .util{margin-top:10px;padding-top:10px;flex-direction:row;flex-wrap:wrap}
+  .cmap .util .chip{width:auto}
+}
 @media(max-width:980px){
-  .panel{border-right:none;padding:18px 13px 30px}
-  .route{padding-left:28px}
-  .step .dot{left:-27px}
-  header{padding:20px 16px 14px}
+  .layout{display:block}
+  .stage{padding:18px 14px 34px}
+  header{padding:14px 16px}
   .metro{min-width:0;width:100%}
+  #peekBtn{display:flex;position:fixed;bottom:14px;right:14px;z-index:60;background:var(--route);color:#0E1F26;border:none;border-radius:24px;padding:13px 18px;font-weight:700;font-size:14px;box-shadow:0 4px 16px rgba(0,0,0,.45);cursor:pointer;align-items:center;gap:6px}
+  .doc-side{display:none}
+  .doc-side.open{display:flex;position:fixed;inset:0;z-index:50;max-height:none;overflow-y:auto;border-left:none}
   .doc-bar{padding:11px 16px}
-  .doc{padding:20px 16px 50px}
+  .doc{padding:20px 16px 40px}
   .doc-note{padding:0 16px 26px}
 }
 </style>
@@ -230,8 +303,8 @@ footer b{color:var(--txt-2)}
 
 <header>
   <div class="brand">
-    <h1>가이드앱 <em>빌더</em></h1>
-    <p>현장에서 손에 쥐고 쓰는 <b>안내 앱</b>을 만들기 전에, 사람이 먼저 구조와 겉모습을 정하는 연습장입니다. 여섯 개 역을 지나면 붙여넣을 프롬프트가 완성돼요. 오른쪽 위에서 <b>승인 게이트를 켜면</b> 단계마다 확인받는 하네스 문서로 바뀝니다.</p>
+    <div class="logo">G</div>
+    <h1>가이드앱 <em>빌더</em><span class="sub">현장 안내 앱을 설계하는 인터랙티브 랩 · 여섯 역을 지나면 붙여넣을 프롬프트가 완성됩니다</span></h1>
   </div>
   <div class="metro">
     <div class="metro-top"><span>BUILD LINE</span><b id="pct">0%</b></div>
@@ -240,24 +313,50 @@ footer b{color:var(--txt-2)}
   </div>
 </header>
 
-<div class="wrap">
-<section class="panel">
-<div class="route">
-  <div class="rfill" id="rfill"></div>
+<div class="layout">
 
-  <div class="step" id="st1">
-    <div class="dot">1</div>
-    <div class="step-h"><div class="t">무엇을 안내하나</div><div class="d">이 앱을 누가, 언제, 어떤 손 상태로 여는지부터 정합니다</div></div>
-    <div class="step-b">
+<!-- ══════════ 코스맵 ══════════ -->
+<nav class="cmap">
+  <div class="cmap-cap">COURSE MAP</div>
+  <div class="cmap-sub">설계에서 프롬프트까지</div>
+  <div class="cmlist" id="cmapList"></div>
+  <div class="cmap-note">점선 ✓는 프리셋이 자동으로 채운 역이에요. 열어서 확인하면 완료로 바뀝니다.</div>
+  <div class="util">
+    <button class="chip" id="sampleBtn" style="border-color:var(--route);color:#A9D6CF">✨ 예시로 구경하기</button>
+    <button class="chip" id="clearBtn">↺ 전체 지우기</button>
+    <button class="chip" id="exportBtn">💾 설정 저장(.json)</button>
+    <button class="chip" id="importBtn">📂 불러오기</button>
+    <input type="file" id="importFile" accept=".json,application/json" style="display:none">
+  </div>
+</nav>
+
+<!-- ══════════ 스테이지 ══════════ -->
+<main class="stage" id="stage">
+
+  <!-- STATION 01 설계 -->
+  <section class="st-page" data-st="1">
+    <div class="st-head">
+      <div class="bdgs"><span class="bdg">STATION 01</span><span class="bdg teal">설계</span></div>
+      <h2>무엇을 안내하나</h2>
+      <p class="lead">이 앱을 누가, 언제, 어떤 손 상태로 여는지부터 정합니다.</p>
+      <div class="goal"><b>이번 역의 도착점</b>앱의 사용자·사용 상황·가장 급할 때 필요한 정보 하나를 말할 수 있다.</div>
+    </div>
+    <div class="st-tabs"><button data-t="concept">개념 익히기</button><button data-t="work" class="on">직접 조작</button><button data-t="check">확인하기</button></div>
+    <div class="st-pane concept" data-t="concept">
+      <div class="h3">이 도구가 대신 물어보는 여섯 질문</div>
+      <b>①</b> 누가 언제 어떤 손 상태로 여나 <b>②</b> 화면을 어떤 네 칸으로 나누고 어떤 색으로 입힐까 <b>③</b> 현장에서 무엇이 걱정되나
+      <b>④</b> 무엇을 담고 어떤 부품을 쓸까 <b>⑤</b> AI가 절대 지어내면 안 되는 값은 무엇인가 <b>⑥</b> 넘겨받기 전에 무엇을 확인할까<br>
+      이 여섯을 스스로 답할 수 있으면, 이 도구는 더 필요 없습니다.
+      <div class="h3">🔬 직접 비교해 보기</div>
+      백문이 불여일견이에요. 같은 주제로 두 번 시켜보고 나란히 놓아 보세요.<br>
+      <b>1)</b> 새 대화에 그냥 "○○ 안내 앱 만들어줘"라고만 해보기<br>
+      <b>2)</b> 다른 대화에 완성된 프롬프트를 붙여넣기<br>
+      <b>3)</b> 두 결과에서 <b>주소와 시각</b>, 그리고 <b>색과 부품</b>이 어떻게 다른지 확인하기<br>
+      1번 결과에는 존재하지 않는 주소가 들어 있고, 화면은 밋밋할 가능성이 높습니다. 프롬프트가 해주는 건 <b>잘 짜인 80%까지</b> — 값을 모으고 두세 번 고치는 일은 원래 사람 몫이에요.
+    </div>
+    <div class="st-pane work on" data-t="work">
       <div class="group"><div class="glabel"><span class="gname">상황</span><span class="gtype">1개 선택</span></div>
         <div class="presets" id="presets"></div></div>
-      <div class="util">
-        <button class="chip" id="sampleBtn" style="border-color:var(--route);color:#A9D6CF">✨ 예시로 구경하기</button>
-        <button class="chip" id="clearBtn">↺ 전체 지우기</button>
-        <button class="chip" id="exportBtn">💾 설정 저장(.json)</button>
-        <button class="chip" id="importBtn">📂 불러오기</button>
-        <input type="file" id="importFile" accept=".json,application/json" style="display:none">
-      </div>
       <div class="field"><label><span class="name">앱 이름</span></label>
         <input type="text" id="f_title" placeholder="예: 2학년 수학여행 안내"></div>
       <div class="field"><label><span class="name">이 앱이 하는 일 한 줄</span></label>
@@ -267,15 +366,45 @@ footer b{color:var(--txt-2)}
       <div class="group"><div class="glabel"><span class="gname">어떤 상황에서</span><span class="gtype">복수 선택</span></div>
         <div class="chips" id="whenChips"></div></div>
       <div class="field" style="margin-bottom:2px"><label><span class="name">📌 가장 급할 때 필요한 정보 하나</span></label>
-        <input type="text" id="f_pin" placeholder="예: 숙소 주소 / 인솔교사 번호 — 화면 맨 위 고정 버튼으로 뺍니다">
-      </div>
+        <input type="text" id="f_pin" placeholder="예: 숙소 주소 / 인솔교사 번호 — 화면 맨 위 고정 버튼으로 뺍니다"></div>
     </div>
-  </div>
+  </section>
 
-  <div class="step" id="st2">
-    <div class="dot">2</div>
-    <div class="step-h"><div class="t">네 칸과 겉모습</div><div class="d">화면은 넷이면 충분합니다. 색과 글꼴까지 여기서 정해요</div></div>
-    <div class="step-b">
+  <!-- STATION 02 모양 -->
+  <section class="st-page" data-st="2">
+    <div class="st-head">
+      <div class="bdgs"><span class="bdg">STATION 02</span><span class="bdg teal">모양</span></div>
+      <h2>네 칸과 겉모습</h2>
+      <p class="lead">화면은 넷이면 충분합니다. 색과 글꼴까지 여기서 정해요. 고르는 대로 오른쪽 미리보기가 바뀝니다.</p>
+      <div class="goal"><b>이번 역의 도착점</b>"깔끔하게" 대신 색상값·글꼴·모서리·움직임을 값으로 지시할 수 있다.</div>
+    </div>
+    <div class="st-tabs"><button data-t="concept">개념 익히기</button><button data-t="work" class="on">직접 조작</button><button data-t="check">확인하기</button></div>
+    <div class="st-pane concept" data-t="concept">
+      <div class="h3">🎨 색을 왜 값으로 주나</div>
+      "예쁘게", "깔끔하게", "세련되게"는 AI에게 아무 정보도 주지 못합니다. 사람마다 뜻이 다르니까요. 그래서 <b>같은 말을 해도 매번 다른 결과</b>가 나옵니다.
+      <table class="cmp" style="margin-top:9px"><thead><tr><th>안 통하는 말</th><th>통하는 말</th></tr></thead><tbody>
+        <tr><td>깔끔하게 만들어줘</td><td>기본색 <b>#2563EB</b>, 강조색 <b>#EF4444</b>, 배경 <b>#F8FAFC</b></td></tr>
+        <tr><td>글씨 예쁘게</td><td>Noto Sans KR을 구글 폰트로 불러오기</td></tr>
+        <tr><td>부드러운 느낌으로</td><td>카드 모서리 16px, 버튼은 알약 모양</td></tr>
+        <tr><td>답답하지 않게</td><td>카드 안쪽 여백 16px 이상</td></tr>
+      </tbody></table>
+      <div style="margin-top:9px">디자인 감각이 없어도 괜찮습니다. <b>값으로 옮기기만 하면</b> 됩니다. 조작 탭에서 고른 색은 실제 색상값으로 프롬프트에 들어가요.</div>
+      <div class="h3">🧑‍💻 클릭하며 배우는 용어</div>
+      칩에 붙은 영어가 실제 코드에서 쓰는 이름입니다. 외울 필요는 없고 <b>눌러보면서 눈에 익히면</b> 충분해요. 이 말을 알면 AI에게 "여기 <b>padding</b> 좀 늘려줘"처럼 정확히 짚을 수 있게 됩니다.
+      <table class="cmp" style="margin-top:9px"><thead><tr><th>우리말</th><th>코드에서 쓰는 말</th><th>무슨 뜻</th></tr></thead><tbody>
+        <tr><td>기본색·강조색</td><td><b>primary / accent</b></td><td>앱을 이끄는 색과 눈길을 끄는 색</td></tr>
+        <tr><td>틴트</td><td><b>tint</b></td><td>기본색을 아주 옅게 푼 배경색</td></tr>
+        <tr><td>모서리</td><td><b>border-radius</b></td><td>네모의 모서리를 얼마나 둥글릴지</td></tr>
+        <tr><td>안쪽 여백</td><td><b>padding</b></td><td>상자 안쪽 여백. 바깥쪽은 margin</td></tr>
+        <tr><td>그림자</td><td><b>box-shadow</b></td><td>카드가 떠 있어 보이게 하는 그늘</td></tr>
+        <tr><td>부드러운 전환</td><td><b>transition</b></td><td>값이 바뀔 때 뚝 바뀌지 않고 서서히</td></tr>
+        <tr><td>눌림 효과</td><td><b>active:scale</b></td><td>누르는 동안 잠깐 작아지기</td></tr>
+        <tr><td>직접 만든 움직임</td><td><b>@keyframes</b></td><td>시작과 끝을 정해 움직임을 그리기</td></tr>
+        <tr><td>움직임 줄이기</td><td><b>prefers-reduced-motion</b></td><td>어지럼을 느끼는 사람에게는 꺼주기</td></tr>
+        <tr><td>화면폭 접두사</td><td><b>md: / lg:</b></td><td>창 크기에 따라 다르게. 이 앱에선 안 씀</td></tr>
+      </tbody></table>
+    </div>
+    <div class="st-pane work on" data-t="work">
       <div class="quad">
         <div class="qcell"><label>① 진행 · 순서가 있는 것</label><input type="text" id="f_tprog"></div>
         <div class="qcell"><label>② 점검 · 체크하면 쌓이는 것</label><input type="text" id="f_tcheck"></div>
@@ -283,61 +412,83 @@ footer b{color:var(--txt-2)}
         <div class="qcell"><label>④ 도구 · 그때만 필요한 것</label><input type="text" id="f_ttool"></div>
       </div>
       <div style="margin:9px 0 15px;font-size:11.5px;color:var(--txt-3);line-height:1.65">상황을 고르면 기본 이름이 채워집니다. 우리 학교 말로 바꿔 주세요 — 학생이 알아듣는 단어가 정답입니다.</div>
-
-      <div class="tip">색은 <b>"깔끔하게"가 아니라 색상값으로</b> 넘겨야 합니다. 아래에서 고른 값이 그대로 프롬프트에 박혀요. 학교 상징색이 있으면 직접 넣으셔도 됩니다.</div>
-
+      <div class="tip">색은 <b>"깔끔하게"가 아니라 색상값으로</b> 넘겨야 합니다. 고른 값이 그대로 프롬프트에 박히고, 오른쪽 <b>📱 미리보기</b>에 즉시 반영돼요. 학교 상징색이 있으면 직접 넣으셔도 됩니다.</div>
       <div class="group"><div class="glabel"><span class="gname">🎨 색 고르기</span><code class="term">primary / accent</code><span class="gtype">1개 선택 후 다듬기</span></div>
         <div class="chips" id="themeChips"></div>
         <div class="picker">
           <div><input type="color" id="c_primary"><span>기본색 <code id="hex_primary"></code></span></div>
           <div><input type="color" id="c_accent"><span>강조색 <code id="hex_accent"></code></span></div>
         </div>
-        <div class="preview" id="preview">
-          <div class="pv-bar" id="pv_bar"><span>🚨 급할 때 정보</span><span id="pv_btn">📞 연락</span></div>
-          <div class="pv-body" id="pv_body">
-            <div class="pv-pills" id="pv_pills"></div>
-            <div class="pv-card" id="pv_card"><b id="pv_time">09:00</b><small>학교 → 목적지 · 대절버스 2대</small></div>
-            <div class="pv-prog" id="pv_prog"><i></i></div>
-          </div>
+        <div class="minipv" id="miniPv" aria-hidden="true">
+          <div id="mp_bar">🚨 급할 때 정보</div>
+          <div class="mp-row"><span id="mp_pill">1일차</span><span id="mp_card"><b id="mp_time">09:00</b>학교 → 목적지 · 대절버스 2대</span></div>
+          <div class="mp-cap">간단 미리보기예요 — 전체 모습은 오른쪽 아래 📄 미리보기 버튼에서 볼 수 있어요.</div>
         </div>
-        <button class="pv-replay" id="replayBtn">▶ 움직임 다시 보기</button>
-        <div class="pv-cap">강조색은 지금 진행 중인 항목과 급한 정보에만 씁니다. 넓은 면적에 쓰면 눈이 아파요.</div>
       </div>
-
       <div class="group"><div class="glabel"><span class="gname">글꼴</span><code class="term">font-family</code><span class="gtype">1개 선택</span></div>
         <div class="chips" id="fontChips"></div></div>
       <div class="group"><div class="glabel"><span class="gname">모서리</span><code class="term">border-radius</code><span class="gtype">1개 선택</span></div>
         <div class="chips" id="radiusChips"></div></div>
       <div class="group"><div class="glabel"><span class="gname">여백</span><code class="term">padding</code><span class="gtype">1개 선택</span></div>
         <div class="chips" id="densityChips"></div></div>
-
       <div class="group"><div class="glabel"><span class="gname">그림자</span><code class="term">box-shadow</code><span class="gtype">1개 선택</span></div>
         <div class="chips" id="shadowChips"></div></div>
-
       <div class="tip">🎬 <b>움직임</b>도 골라서 넘길 수 있어요. 칩에 적힌 영어가 실제 코드에서 쓰는 말입니다 — 눌러보면서 눈에 익혀 두시면, 나중에 "여기 <b>transition</b> 좀 넣어줘"처럼 말할 수 있게 돼요.</div>
       <div class="group"><div class="glabel"><span class="gname">🎬 움직임</span><span class="gtype" id="animCnt"></span></div>
         <div class="foldbar" id="animBar"></div>
         <div id="animFolds"></div></div>
-
       <div class="field" style="margin-bottom:2px"><label><span class="name">🔗 기존 앱과 같은 스타일로</span><span class="opt">(선택)</span></label>
         <textarea id="f_style" placeholder="이미 만든 앱의 :root 색상 변수나 style 블록을 붙여넣으면, 그 스타일을 그대로 따르라고 지시합니다. 앱을 여러 개 만들 때 인상을 맞추는 용도예요."></textarea></div>
     </div>
-  </div>
+  </section>
 
-  <div class="step" id="st3">
-    <div class="dot">3</div>
-    <div class="step-h"><div class="t">현장에서 걱정되는 지점</div><div class="d">어디서 사고가 나는지 아는 사람은 선생님뿐입니다</div></div>
-    <div class="step-b">
+  <!-- STATION 03 진단 -->
+  <section class="st-page" data-st="3">
+    <div class="st-head">
+      <div class="bdgs"><span class="bdg">STATION 03</span><span class="bdg teal">진단</span></div>
+      <h2>현장에서 걱정되는 지점</h2>
+      <p class="lead">어디서 사고가 나는지 아는 사람은 선생님뿐입니다.</p>
+      <div class="goal"><b>이번 역의 도착점</b>현장의 걱정을 화면 설계 지시로 바꿀 수 있다.</div>
+    </div>
+    <div class="st-tabs"><button data-t="concept">개념 익히기</button><button data-t="work" class="on">직접 조작</button><button data-t="check">확인하기</button></div>
+    <div class="st-pane concept" data-t="concept">
+      <div class="h3">걱정은 그대로 두면 사고가 되고, 지시로 바꾸면 설계가 됩니다</div>
+      AI는 현장을 모릅니다. "학생이 집합 시각을 놓칠까 봐 걱정"이라는 문장은 AI에게 아무 힘이 없지만,
+      <b>"시각을 카드 맨 위에 가장 큰 글씨로 두라"</b>는 지시는 화면을 바꿉니다.<br><br>
+      이 역에서 걱정 칩을 고르면, 미리 준비된 <b>대응 지시문</b>이 프롬프트에 함께 들어갑니다.
+      칩 아래에 나타나는 "걱정 → 지시" 변환을 눈여겨 보세요 — 이 변환 습관이 생기면 어떤 앱을 만들든 써먹을 수 있습니다.
+    </div>
+    <div class="st-pane work on" data-t="work">
       <div class="group" style="margin-bottom:0"><div class="glabel"><span class="gname" id="riskQ">무엇이 걱정되나요?</span><span class="gtype">복수 선택</span></div>
         <div class="chips" id="riskChips"></div>
         <div class="riskmap" id="riskMap"></div></div>
     </div>
-  </div>
+  </section>
 
-  <div class="step" id="st4">
-    <div class="dot">4</div>
-    <div class="step-h"><div class="t">담을 내용과 화면 부품</div><div class="d">무엇이 들어가는지, 어떤 부품으로 보일지 정합니다</div></div>
-    <div class="step-b">
+  <!-- STATION 04 내용 -->
+  <section class="st-page" data-st="4">
+    <div class="st-head">
+      <div class="bdgs"><span class="bdg">STATION 04</span><span class="bdg teal">내용</span></div>
+      <h2>담을 내용과 화면 부품</h2>
+      <p class="lead">무엇이 들어가는지, 어떤 부품으로 보일지 정합니다.</p>
+      <div class="goal"><b>이번 역의 도착점</b>네 칸 각각에 들어갈 내용과 화면 부품을 고를 수 있다.</div>
+    </div>
+    <div class="st-tabs"><button data-t="concept">개념 익히기</button><button data-t="work" class="on">직접 조작</button><button data-t="check">확인하기</button></div>
+    <div class="st-pane concept" data-t="concept">
+      <div class="h3">📐 왜 네 칸인가</div>
+      현장 안내 앱은 주제가 무엇이든 네 가지 정보로 나뉩니다. 이 넷으로 갈라놓으면 내용이 늘어도 화면이 무너지지 않아요.
+      <div class="four">
+        <div><b>① 진행</b>시간에 따라 변하는 것. 일차·차시·시간대</div>
+        <div><b>② 점검</b>체크하면 쌓이는 것. 준비물·제출물</div>
+        <div><b>③ 참조</b>변하지 않는 사실. 주소·연락처·번호</div>
+        <div><b>④ 도구</b>그 상황에만 필요한 것. 계산기·타이머·지도</div>
+      </div>
+      <div class="h3" style="margin-top:16px">부품을 적어야 밋밋하지 않습니다</div>
+      "일정표 화면 만들어줘"라고만 하면 AI는 가장 단순한 목록을 그립니다.
+      <b>상단 고정 바 · 타임라인 · 복사 버튼</b>처럼 부품 이름을 하나하나 적어야 손에 쥐고 쓸 만한 화면이 나와요.
+      조작 탭의 부품 목록은 기본으로 다 켜져 있으니, 필요 없는 것만 끄면 됩니다.
+    </div>
+    <div class="st-pane work on" data-t="work">
       <div class="group"><div class="glabel"><span class="gname">① 진행을 나누는 단위</span><span class="gtype">1개 선택</span></div>
         <div class="chips" id="unitChips"></div></div>
       <div class="group"><div class="glabel"><span class="gname">몇 구간인가요</span><span class="gtype">1개 선택</span></div>
@@ -355,12 +506,29 @@ footer b{color:var(--txt-2)}
       <div class="group" style="margin-bottom:2px"><div class="glabel"><span class="gname">④ 도구 화면에 둘 것</span><span class="gtype">복수 선택</span></div>
         <div class="chips" id="toolChips"></div></div>
     </div>
-  </div>
+  </section>
 
-  <div class="step guard" id="st5">
-    <div class="dot">5</div>
-    <div class="step-h"><div class="t">🔒 지어내지 않기</div><div class="d">이 앱에서 가장 중요한 규칙입니다</div></div>
-    <div class="step-b">
+  <!-- STATION 05 잠금 -->
+  <section class="st-page" data-st="5">
+    <div class="st-head">
+      <div class="bdgs"><span class="bdg">STATION 05</span><span class="bdg warm">잠금</span></div>
+      <h2>🔒 지어내지 않기</h2>
+      <p class="lead">이 앱에서 가장 중요한 규칙입니다.</p>
+      <div class="goal"><b>이번 역의 도착점</b>AI가 절대 지어내면 안 되는 값을 지정하고, 값 목록을 먼저 받게 할 수 있다.</div>
+    </div>
+    <div class="st-tabs"><button data-t="concept">개념 익히기</button><button data-t="work" class="on">직접 조작</button><button data-t="check">확인하기</button></div>
+    <div class="st-pane concept" data-t="concept">
+      <div class="h3">틀린 정보 하나가 앱 전체를 무너뜨립니다</div>
+      안내 앱은 <b>틀린 정보가 하나만 있어도 앱 전체를 못 믿게 됩니다.</b>
+      주소·시각·연락처 같은 값은 "내가 준 값이 아니면 비워두고 물어보기"로 잠가야 해요.
+      대신 <b>무엇을 모아 와야 하는지 목록을 먼저 받는</b> 요구가 프롬프트에 자동으로 들어가니, 껍데기만 나오지는 않습니다.
+      <div class="h3">특히 위험한 두 가지</div>
+      <b>자리표시자</b> — 값이 없는 자리에 example.com 같은 가짜 링크가 들어가면, 눌렀을 때 엉뚱한 곳으로 갑니다.
+      화면 글자에만 자리표시자를 쓰고, href·tel 속성에는 절대 넣지 않게 잠급니다.<br>
+      <b>지도 cid</b> — 구글 지도 링크의 긴 숫자 ID는 직접 복사해야만 나오는 값이라, AI가 지어내면 <b>엉뚱한 장소로 이동</b>합니다.
+      지도는 반드시 내가 준 주소 문자열로만 만들게 잠급니다.
+    </div>
+    <div class="st-pane work on" data-t="work">
       <div class="why">안내 앱은 <b>틀린 정보가 하나만 있어도 앱 전체를 못 믿게 됩니다.</b> 아래 항목은 "내가 준 값이 아니면 비워두고 물어보기"로 잠급니다. 대신 <b>무엇을 모아 와야 하는지 목록을 먼저 받는</b> 요구가 자동으로 들어가니, 껍데기만 나오지는 않아요.</div>
       <div class="group"><div class="glabel"><span class="gname">잠글 항목</span><span class="gtype">필요 없는 건 끄기</span></div>
         <div class="toggles" id="tg_locks"></div>
@@ -369,12 +537,29 @@ footer b{color:var(--txt-2)}
         <div class="chips" id="deployChips"></div>
         <div style="margin-top:8px;font-size:11.5px;color:var(--txt-3);line-height:1.65">체크 상태를 새로고침 뒤에도 남기려면 브라우저 저장이 필요해요. 대화형 미리보기 안에서는 그 기능이 막혀 있어서 화면이 아예 안 뜨는 일이 생깁니다.</div></div>
     </div>
-  </div>
+  </section>
 
-  <div class="step" id="st6">
-    <div class="dot">6</div>
-    <div class="step-h"><div class="t">넘겨받기 전에 확인할 것</div><div class="d">무엇을 검사할지 정하는 사람도 선생님입니다</div></div>
-    <div class="step-b">
+  <!-- STATION 06 검증 -->
+  <section class="st-page" data-st="6">
+    <div class="st-head">
+      <div class="bdgs"><span class="bdg">STATION 06</span><span class="bdg teal">검증</span></div>
+      <h2>넘겨받기 전에 확인할 것</h2>
+      <p class="lead">무엇을 검사할지 정하는 사람도 선생님입니다.</p>
+      <div class="goal"><b>이번 역의 도착점</b>넘겨받기 전 점검표와 검증 방식을 스스로 정할 수 있다.</div>
+    </div>
+    <div class="st-tabs"><button data-t="concept">개념 익히기</button><button data-t="work" class="on">직접 조작</button><button data-t="check">확인하기</button></div>
+    <div class="st-pane concept" data-t="concept">
+      <div class="h3">🚦 승인 게이트는 언제 켜나</div>
+      승인 게이트는 <b>단계마다 멈추고 사람 확인을 받는 장치</b>입니다. 늘 켜는 게 좋은 건 아니에요. 되돌리는 비용이 쌀 때는 그냥 한 번에 뽑고 다시 뽑는 게 빠릅니다.
+      <table class="cmp" style="margin-top:9px"><thead><tr><th>이럴 땐 끄기</th><th>이럴 땐 켜기</th></tr></thead><tbody>
+        <tr><td>만들 것이 이미 또렷할 때</td><td>무엇을 만들지 아직 흐릿할 때</td></tr>
+        <tr><td>틀리면 다시 뽑으면 되는 것</td><td>되돌리는 비용이 클 때</td></tr>
+        <tr><td>나 혼자 쓸 것</td><td>학생·학부모에게 그대로 나갈 것</td></tr>
+        <tr><td>짧은 결과물</td><td>여러 사람 손을 거치는 결과물</td></tr>
+      </tbody></table>
+      <div style="margin-top:9px">안내 앱은 대체로 <b>끄는 쪽</b>입니다. 연수에서는 같은 내용으로 켜고 한 번, 끄고 한 번 돌려보시면 차이가 바로 보입니다. 게이트 전환은 오른쪽 프롬프트 패널 위의 <b>모드 버튼</b>에 있어요.</div>
+    </div>
+    <div class="st-pane work on" data-t="work">
       <div class="group"><div class="glabel"><span class="gname">✅ 점검표</span><span class="gtype">필요 없는 건 끄기</span></div>
         <details class="fold"><summary><span><span class="arw">▶</span> 점검 항목 펼치기</span><span class="cnt" id="checksCnt">0 / 0</span></summary>
           <div class="foldbody"><div class="toggles" id="tg_checks"></div></div>
@@ -385,104 +570,75 @@ footer b{color:var(--txt-2)}
       <div class="field" style="margin-bottom:2px"><label><span class="name">✍️ 내 실제 내용 붙이기</span><span class="opt">(선택 · 강력 추천)</span></label>
         <textarea id="f_content" placeholder="표를 그대로 붙여넣어도 되고, 줄글로 써도 됩니다.&#10;예)&#10;1일차&#10;09:00 | 이동 | 학교 → 경주 | 대절버스 2대 | 담임 인솔&#10;11:30 | 관람 | 불국사 | 조별 자유 관람, 12:40 정문 집합"></textarea></div>
     </div>
+  </section>
+
+  <div class="st-nav">
+    <button id="navPrev">← 이전 역</button>
+    <span id="navPos"></span>
+    <button id="navNext">다음 역 →</button>
+  </div>
+</main>
+
+<!-- ══════════ 문서 패널 ══════════ -->
+<aside class="doc-side">
+  <div class="aside-tabs">
+    <button id="atDoc" class="on">📄 프롬프트</button>
+    <button id="atPv">📱 미리보기</button>
   </div>
 
-</div>
-
-  <div class="extras">
-    <div class="extras-tabs" id="extraTabs">
-      <button class="etab" data-p="four">📐 왜 네 칸인가</button>
-      <button class="etab" data-p="color">🎨 색을 왜 값으로 주나</button>
-      <button class="etab" data-p="term">🧑‍💻 클릭하며 배우는 용어</button>
-      <button class="etab" data-p="gate">🚦 게이트는 언제 켜나</button>
-      <button class="etab" data-p="grad">🎓 앱 없이 하기</button>
-      <button class="etab" data-p="try">🔬 직접 비교하기</button>
-    </div>
-    <div class="epanel" data-p="four">
-      현장 안내 앱은 주제가 무엇이든 네 가지 정보로 나뉩니다. 이 넷으로 갈라놓으면 내용이 늘어도 화면이 무너지지 않아요.
-      <div class="four">
-        <div><b>① 진행</b>시간에 따라 변하는 것. 일차·차시·시간대</div>
-        <div><b>② 점검</b>체크하면 쌓이는 것. 준비물·제출물</div>
-        <div><b>③ 참조</b>변하지 않는 사실. 주소·연락처·번호</div>
-        <div><b>④ 도구</b>그 상황에만 필요한 것. 계산기·타이머·지도</div>
+  <div class="apanel on" id="ap_doc">
+    <div class="doc-bar">
+      <div class="fname">📄 <b id="fname">GUIDE-APP.md</b></div>
+      <div class="mode">
+        <button id="modeOff" class="on">한 장 프롬프트</button>
+        <button id="modeOn">승인 게이트 포함</button>
+      </div>
+      <span class="count" id="stepCount">0 / 6 역</span>
+      <div class="btns">
+        <button class="dl" id="dlBtn">⬇ 저장</button>
+        <button class="copy" id="copyBtn">⧉ 전체 복사</button>
       </div>
     </div>
-    <div class="epanel" data-p="color">
-      "예쁘게", "깔끔하게", "세련되게"는 AI에게 아무 정보도 주지 못합니다. 사람마다 뜻이 다르니까요. 그래서 <b>같은 말을 해도 매번 다른 결과</b>가 나옵니다.
-      <table class="cmp" style="margin-top:9px"><thead><tr><th>안 통하는 말</th><th>통하는 말</th></tr></thead><tbody>
-        <tr><td>깔끔하게 만들어줘</td><td>기본색 <b>#2563EB</b>, 강조색 <b>#EF4444</b>, 배경 <b>#F8FAFC</b></td></tr>
-        <tr><td>글씨 예쁘게</td><td>Noto Sans KR을 구글 폰트로 불러오기</td></tr>
-        <tr><td>부드러운 느낌으로</td><td>카드 모서리 16px, 버튼은 알약 모양</td></tr>
-        <tr><td>답답하지 않게</td><td>카드 안쪽 여백 16px 이상</td></tr>
-      </tbody></table>
-      <div style="margin-top:9px">디자인 감각이 없어도 괜찮습니다. <b>값으로 옮기기만 하면</b> 됩니다. 위에서 고른 색은 실제 색상값으로 프롬프트에 들어가요.</div>
+    <div class="copy-nudge" id="copyNudge" hidden>
+      <span>📌 <b>설정(.json)도 저장</b>해 두면 다른 컴퓨터·다음 연수에서 이어서 고칠 수 있어요.</span>
+      <button class="cn-save" id="nudgeSave">💾 설정 저장</button>
+      <button class="cn-x" id="nudgeClose" aria-label="안내 닫기">닫기 ✕</button>
     </div>
-    <div class="epanel" data-p="term">
-      칩에 붙은 영어가 실제 코드에서 쓰는 이름입니다. 외울 필요는 없고 <b>눌러보면서 눈에 익히면</b> 충분해요. 이 말을 알면 AI에게 "여기 <b>padding</b> 좀 늘려줘"처럼 정확히 짚을 수 있게 됩니다.
-      <table class="cmp" style="margin-top:9px"><thead><tr><th>우리말</th><th>코드에서 쓰는 말</th><th>무슨 뜻</th></tr></thead><tbody>
-        <tr><td>기본색·강조색</td><td><b>primary / accent</b></td><td>앱을 이끄는 색과 눈길을 끄는 색</td></tr>
-        <tr><td>틴트</td><td><b>tint</b></td><td>기본색을 아주 옅게 푼 배경색</td></tr>
-        <tr><td>모서리</td><td><b>border-radius</b></td><td>네모의 모서리를 얼마나 둥글릴지</td></tr>
-        <tr><td>안쪽 여백</td><td><b>padding</b></td><td>상자 안쪽 여백. 바깥쪽은 margin</td></tr>
-        <tr><td>그림자</td><td><b>box-shadow</b></td><td>카드가 떠 있어 보이게 하는 그늘</td></tr>
-        <tr><td>부드러운 전환</td><td><b>transition</b></td><td>값이 바뀔 때 뚝 바뀌지 않고 서서히</td></tr>
-        <tr><td>눌림 효과</td><td><b>active:scale</b></td><td>누르는 동안 잠깐 작아지기</td></tr>
-        <tr><td>직접 만든 움직임</td><td><b>@keyframes</b></td><td>시작과 끝을 정해 움직임을 그리기</td></tr>
-        <tr><td>움직임 줄이기</td><td><b>prefers-reduced-motion</b></td><td>어지럼을 느끼는 사람에게는 꺼주기</td></tr>
-        <tr><td>화면폭 접두사</td><td><b>md: / lg:</b></td><td>창 크기에 따라 다르게. 이 앱에선 안 씀</td></tr>
-      </tbody></table>
-    </div>
-    <div class="epanel" data-p="gate">
-      승인 게이트는 <b>단계마다 멈추고 사람 확인을 받는 장치</b>입니다. 늘 켜는 게 좋은 건 아니에요. 되돌리는 비용이 쌀 때는 그냥 한 번에 뽑고 다시 뽑는 게 빠릅니다.
-      <table class="cmp" style="margin-top:9px"><thead><tr><th>이럴 땐 끄기</th><th>이럴 땐 켜기</th></tr></thead><tbody>
-        <tr><td>만들 것이 이미 또렷할 때</td><td>무엇을 만들지 아직 흐릿할 때</td></tr>
-        <tr><td>틀리면 다시 뽑으면 되는 것</td><td>되돌리는 비용이 클 때</td></tr>
-        <tr><td>나 혼자 쓸 것</td><td>학생·학부모에게 그대로 나갈 것</td></tr>
-        <tr><td>짧은 결과물</td><td>여러 사람 손을 거치는 결과물</td></tr>
-      </tbody></table>
-      <div style="margin-top:9px">안내 앱은 대체로 <b>끄는 쪽</b>입니다. 연수에서는 같은 내용으로 켜고 한 번, 끄고 한 번 돌려보시면 차이가 바로 보입니다.</div>
-    </div>
-    <div class="epanel" data-p="grad">
-      이 앱이 한 일은 여섯 가지 질문을 대신 물어본 것뿐이에요.<br>
-      <b>①</b> 누가 언제 어떤 손 상태로 여나 <b>②</b> 화면을 어떤 네 칸으로 나누고 어떤 색으로 입힐까 <b>③</b> 현장에서 무엇이 걱정되나
-      <b>④</b> 무엇을 담고 어떤 부품을 쓸까 <b>⑤</b> AI가 절대 지어내면 안 되는 값은 무엇인가 <b>⑥</b> 넘겨받기 전에 무엇을 확인할까<br>
-      이 여섯을 답할 수 있으면, 이 도구는 더 필요 없습니다.
-    </div>
-    <div class="epanel" data-p="try">
-      백문이 불여일견이에요. 같은 주제로 두 번 시켜보고 나란히 놓아 보세요.<br><br>
-      <b>1)</b> 새 대화에 그냥 "○○ 안내 앱 만들어줘"라고만 해보기<br>
-      <b>2)</b> 다른 대화에 이 프롬프트를 붙여넣기<br>
-      <b>3)</b> 두 결과에서 <b>주소와 시각</b>, 그리고 <b>색과 부품</b>이 어떻게 다른지 확인하기<br><br>
-      1번 결과에는 존재하지 않는 주소가 들어 있고, 화면은 밋밋할 가능성이 높습니다.<br><br>
-      한 가지 미리 아셔야 할 것 — 프롬프트가 해주는 건 <b>잘 짜인 80%까지</b>입니다. 지도 링크를 모으고 시각을 확인하고 두세 번 고치는 일은 남습니다. 그건 도구의 한계가 아니라 원래 사람 몫이에요.
-    </div>
+    <div class="doc" id="doc"></div>
+    <div class="doc-note" id="docNote"></div>
   </div>
 
-</section>
-
-<section class="doc-side">
-  <div class="doc-bar">
-    <div class="fname">📄 <b id="fname">GUIDE-APP.md</b></div>
-    <div class="mode">
-      <button id="modeOff" class="on">한 장 프롬프트</button>
-      <button id="modeOn">승인 게이트 포함</button>
+  <div class="apanel" id="ap_pv">
+    <div class="pv-head">고른 값이 실제 앱에서 어떻게 보이나</div>
+    <div class="phone">
+      <div class="preview" id="preview">
+        <div class="pv-bar" id="pv_bar"><span>🚨 급할 때 정보</span><span id="pv_btn">📞 연락</span></div>
+        <div class="pv-body" id="pv_body">
+          <div class="pv-pills" id="pv_pills"></div>
+          <div class="pv-card" id="pv_card"><b id="pv_time">09:00</b><small>학교 → 목적지 · 대절버스 2대</small></div>
+          <div class="pv-prog" id="pv_prog"><i></i></div>
+        </div>
+      </div>
     </div>
-    <span class="count" id="stepCount">0 / 6 역</span>
-    <div class="btns">
-      <button class="dl" id="dlBtn">⬇ 저장</button>
-      <button class="copy" id="copyBtn">⧉ 전체 복사</button>
-    </div>
+    <button class="pv-replay" id="replayBtn">▶ 움직임 다시 보기</button>
+    <div class="pv-cap">강조색은 지금 진행 중인 항목과 급한 정보에만 씁니다. 넓은 면적에 쓰면 눈이 아파요.</div>
   </div>
-  <div class="doc" id="doc"></div>
-  <div class="doc-note" id="docNote"></div>
-</section>
+
+  <div class="actlog">
+    <div class="al-cap"><i>●</i>조작 기록</div>
+    <div id="logList"><div class="lempty">아직 조작이 없어요 — 왼쪽에서 골라 보세요.</div></div>
+  </div>
+</aside>
+
 </div>
 
 <button id="peekBtn" aria-label="문서 미리보기 열기">📄 미리보기</button>
 <footer><b>가이드앱 프롬프트</b> = 무엇을 만들지 + 어떤 모양으로 + <b>무엇을 지어내지 말지</b>. 승인 게이트는 필요할 때만 얹는 장치입니다. 이 도구의 목표는 선생님이 이 도구 없이도 여섯 질문을 던지게 되는 것입니다.</footer>
 
 <script>
-/* ══════════ 데이터 ══════════ */
+/* ══════════════════════════════════════════
+   1. 데이터 — 선택지·프리셋·규칙 문구
+══════════════════════════════════════════ */
 const USE=["학생 각자의 휴대폰","인솔·담당 교사","학부모","참가자 본인","나 혼자"];
 const WHEN=["이동 중 한 손으로","출발 전날 밤 준비하며","행사 당일 현장에서","수업 시간에","급한 상황에서"];
 const UNITS=["일차","차시","시간대","주차","코스"];
@@ -511,7 +667,6 @@ const DENSITY=[
  {label:"넉넉하게",text:"카드 안쪽 여백은 16px 이상, 항목 사이는 12px 이상으로 넉넉하게 잡아 주세요"},
  {label:"촘촘하게",text:"카드 안쪽 여백은 10px 안팎으로 잡아 한 화면에 더 많이 보이게 해 주세요"}
 ];
-
 const SHADOW=[
  {label:"없음",code:"box-shadow: none",text:"카드에 그림자를 넣지 말고 옅은 테두리로만 구분해 주세요"},
  {label:"옅게",code:"0 1px 3px",text:"카드에 아주 옅은 그림자를 넣어 주세요"},
@@ -546,7 +701,6 @@ const PARTS=[
  ["중요 표시 리본","중요한 항목 카드 위쪽에 작은 리본 배지를 붙여 한눈에 띄게 해 주세요"],
  ["아이콘 세트","Font Awesome을 CDN으로 불러와 분류와 버튼에 아이콘을 붙여 주세요"]
 ];
-
 const PART_GROUPS=[
  ["화면 뼈대",["상단 고정 바","구간 선택 알약 버튼","대표 카드","빠른 링크 칩","세로 연결선 타임라인"]],
  ["항목 카드 안",["항목 카드","지도 버튼","웹 링크 버튼","지도 미리보기(임베드)","미확인 회색 배지","강조 카드","중요 표시 리본","메모 입력칸"]],
@@ -698,15 +852,37 @@ const PROC=[
  ["3. 데이터 확정","제가 값을 드리면, 데이터 구조에 끼워 넣은 데이터 부분만 보여 주세요."],
  ["4. 제작과 자가검증","화면을 만들고, 점검표를 하나씩 확인한 결과를 표로 보여 주세요."]
 ];
+/* 역(스테이션) 정보 — 코스맵에 쓰임 */
+const STATION_META=[
+ {tag:"설계",tt:"무엇을 안내하나",dd:"사용자·상황·급한 정보"},
+ {tag:"모양",tt:"네 칸과 겉모습",dd:"색·글꼴을 값으로"},
+ {tag:"진단",tt:"현장 걱정 지점",dd:"걱정을 지시로"},
+ {tag:"내용",tt:"내용과 화면 부품",dd:"네 칸 채우기"},
+ {tag:"잠금",tt:"지어내지 않기",dd:"값 잠그기",guard:true},
+ {tag:"검증",tt:"넘겨받기 전 확인",dd:"점검표·검증 방식"}
+];
+/* 역별 자기점검 문항 — '확인하기' 탭. 진행률·프롬프트에는 반영하지 않는다 */
+const SELF_CHECKS=[
+ ["이 앱을 누가·언제·어떤 상황에서 쓰는지 한 문장으로 말할 수 있다","가장 급할 때 필요한 정보 하나를 정했다"],
+ ["\"깔끔하게\" 대신 색상값(#으로 시작하는 값)으로 지시했다","미리보기에서 내가 고른 값이 어떻게 보이는지 확인했다"],
+ ["내 걱정을 '~해 주세요' 형태의 화면 지시로 바꿨다"],
+ ["네 칸 각각에 무엇이 들어가는지 말할 수 있다","필요 없는 화면 부품을 실제로 꺼 봤다"],
+ ["AI가 지어내면 안 되는 값을 골랐다","링크 자리에 가짜 값을 넣으면 왜 위험한지 설명할 수 있다"],
+ ["넘겨받기 전 무엇을 검사할지 스스로 정했다","승인 게이트를 언제 켜고 끌지 판단할 수 있다"]
+];
 
-/* ══════════ 상태 ══════════ */
+/* ══════════════════════════════════════════
+   2. 상태 · 저장소
+══════════════════════════════════════════ */
 let preset="수학여행·현장체험";
+let cur=1;                              // 현재 역 번호
 const S={use:new Set(),when:new Set(),risks:new Set(),
  unit:null,segs:null,gate:false,
  theme:"차분한 남색",primary:"#2563EB",accent:"#EF4444",bg:"#F8FAFC",tint:"#EFF6FF",
  font:"Noto Sans KR",radius:"둥글게",density:"넉넉하게",shadow:"옅게",anim:[],
  parts:[],check:[],ref:[],tools:[],locks:[],checks:[],
- verify:null,deploy:null,showDesc:false,openFolds:new Set()};
+ verify:null,deploy:null,showDesc:false,openFolds:new Set(),
+ visited:new Set(),self:{}};          // visited: 직접 열어본 역, self: 역별 자기점검
 const TXT=["title","purpose","pin","tprog","tcheck","tref","ttool","style","content"];
 const el={};const $=id=>document.getElementById(id);
 TXT.forEach(k=>el[k]=$("f_"+k));
@@ -714,16 +890,49 @@ const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"
 const on=arr=>arr.filter(x=>x.on).map(x=>x.t);
 const onFull=arr=>arr.filter(x=>x.on);
 
-/* ══════════ 위젯 ══════════ */
+const KEY="guide-app-builder-v8";
+const OLD_KEY="guide-app-builder-v7";   // 구버전(백업 파일)과 키를 분리해 서로 덮어쓰지 않게 한다
+const store={
+  get(){try{return localStorage.getItem(KEY)}catch(e){return null}},
+  getOld(){try{return localStorage.getItem(OLD_KEY)}catch(e){return null}},
+  set(x){try{localStorage.setItem(KEY,x)}catch(e){}},
+  del(){try{localStorage.removeItem(KEY)}catch(e){}}
+};
+function snapshot(){
+  const texts={};TXT.forEach(k=>texts[k]=el[k].value);
+  return JSON.stringify({preset,texts,gate:S.gate,station:cur,
+    visited:[...S.visited],self:S.self,
+    use:[...S.use],when:[...S.when],risks:[...S.risks],
+    unit:S.unit,segs:S.segs,verify:S.verify,deploy:S.deploy,
+    theme:S.theme,primary:S.primary,accent:S.accent,bg:S.bg,tint:S.tint,
+    font:S.font,radius:S.radius,density:S.density,shadow:S.shadow,anim:S.anim,
+    parts:S.parts,check:S.check,ref:S.ref,tools:S.tools,locks:S.locks,checks:S.checks});
+}
+
+/* ══════════════════════════════════════════
+   3. 조작 기록
+══════════════════════════════════════════ */
+const LOG=[];
+function logAct(msg){
+  LOG.unshift(msg);
+  if(LOG.length>7)LOG.length=7;
+  $("logList").innerHTML=LOG.map((x,i)=>
+    '<div class="lrow"><span class="ln">'+(i===0?"NOW":String(i).padStart(2,"0"))+'</span><span>'+esc(x)+"</span></div>").join("");
+}
+
+/* ══════════════════════════════════════════
+   4. 공용 위젯 빌더
+══════════════════════════════════════════ */
 function simpleChips(box,opts,set){
   box.innerHTML="";
   opts.forEach(o=>{
     const c=document.createElement("button");c.className="chip"+(set.has(o)?" on":"");c.textContent=o;
-    c.onclick=()=>{set.has(o)?set.delete(o):set.add(o);c.classList.toggle("on",set.has(o));render();};
+    c.onclick=()=>{set.has(o)?set.delete(o):set.add(o);c.classList.toggle("on",set.has(o));
+      logAct((set.has(o)?"선택":"해제")+" · "+o);render();};
     box.appendChild(c);
   });
 }
-function singleChips(box,opts,key,allowNull){
+function singleChips(box,opts,key,allowNull,logName){
   box.innerHTML="";
   opts.forEach(o=>{
     const label=typeof o==="string"?o:o.label;
@@ -732,7 +941,8 @@ function singleChips(box,opts,key,allowNull){
     c.dataset.label=label;
     c.innerHTML=esc(label)+(code?'<code class="term">'+esc(code)+"</code>":"");
     c.onclick=()=>{S[key]=(S[key]===label&&allowNull!==false)?null:label;
-      box.querySelectorAll(".chip").forEach(x=>x.classList.toggle("on",x.dataset.label===S[key]));render();};
+      box.querySelectorAll(".chip").forEach(x=>x.classList.toggle("on",x.dataset.label===S[key]));
+      if(logName)logAct(logName+" — "+(S[key]||"선택 해제"));render();};
     box.appendChild(c);
   });
 }
@@ -744,7 +954,7 @@ function themeChips(){
     b.innerHTML='<span class="sw2"><i style="background:'+t.p+'"></i><i style="background:'+t.a+'"></i></span><span>'+t.label+"</span>";
     b.onclick=()=>{S.theme=t.label;S.primary=t.p;S.accent=t.a;S.bg=t.bg;S.tint=t.tint;
       $("c_primary").value=t.p;$("c_accent").value=t.a;
-      themeChips();render();};
+      logAct("테마 — "+t.label);themeChips();render();};
     box.appendChild(b);
   });
 }
@@ -752,30 +962,50 @@ function listChips(box,key){
   box.innerHTML="";
   S[key].forEach(item=>{
     const c=document.createElement("button");c.className="chip"+(item.on?" on":"");c.textContent=item.t;
-    c.onclick=()=>{item.on=!item.on;c.classList.toggle("on",item.on);render();};
+    c.onclick=()=>{item.on=!item.on;c.classList.toggle("on",item.on);
+      logAct((item.on?"켜기":"끄기")+" · "+item.t);render();};
     box.appendChild(c);
   });
 }
 function toggles(box,key,kind){
   box.innerHTML="";
   S[key].forEach(item=>{
-    const d=document.createElement("div");
+    const d=document.createElement("button");
+    d.type="button";
     d.className="tog"+(kind==="lock"?" lock":"")+(item.on?" on":" off");
+    d.setAttribute("aria-pressed",String(!!item.on));
     d.innerHTML='<div class="sw"></div><span class="txt">'+esc(item.t)+
       (item.code?'<code class="term">'+esc(item.code)+"</code>":"")+
       (item.d?'<small>'+esc(item.d)+"</small>":"")+"</span>";
     d.onclick=()=>{item.on=!item.on;
-      d.className="tog"+(kind==="lock"?" lock":"")+(item.on?" on":" off");render();
+      d.className="tog"+(kind==="lock"?" lock":"")+(item.on?" on":" off");
+      d.setAttribute("aria-pressed",String(item.on));
+      logAct((item.on?"켜기":"끄기")+" · "+item.t);render();
       if(key==="anim")replayPreview();};
     box.appendChild(d);
   });
   if(key==="locks")quickLock(box);
 }
+function quickLock(box){
+  const q=document.createElement("div");q.className="chips";q.style.marginTop="8px";
+  QUICK_LOCK.forEach(t=>{
+    const has=S.locks.some(x=>x.t===t);
+    const c=document.createElement("button");
+    c.className="chip"+(has?" on":"");c.style.cssText="font-size:11.5px;padding:5px 10px";
+    c.textContent=(has?"":"＋ ")+t;
+    c.onclick=()=>{const i=S.locks.findIndex(x=>x.t===t);
+      if(i>=0){S.locks.splice(i,1);logAct("잠금 제거 · "+t);}
+      else{S.locks.push({t,on:true});logAct("잠금 추가 · "+t);}
+      toggles($("tg_locks"),"locks","lock");render();};
+    q.appendChild(c);
+  });
+  box.appendChild(q);
+}
 function drawParts(){
   const bar=$("partsBar");bar.innerHTML="";
   const mk=(t,cls,fn)=>{const b=document.createElement("button");b.textContent=t;if(cls)b.className=cls;b.onclick=fn;bar.appendChild(b);};
-  mk("모두 켜기",null,()=>{S.parts.forEach(x=>x.on=true);drawParts();render();});
-  mk("모두 끄기",null,()=>{S.parts.forEach(x=>x.on=false);drawParts();render();});
+  mk("모두 켜기",null,()=>{S.parts.forEach(x=>x.on=true);logAct("부품 모두 켜기");drawParts();render();});
+  mk("모두 끄기",null,()=>{S.parts.forEach(x=>x.on=false);logAct("부품 모두 끄기");drawParts();render();});
   mk("ⓘ 설명 보기",S.showDesc?"on":null,()=>{S.showDesc=!S.showDesc;drawParts();drawAnim();});
 
   const wrap=$("partsFolds");wrap.innerHTML="";
@@ -796,10 +1026,12 @@ function drawParts(){
     det.appendChild(sum);
     const body=document.createElement("div");body.className="foldbody"+(S.showDesc?" showdesc":"");
     items.forEach(item=>{
-      const t=document.createElement("div");
+      const t=document.createElement("button");
+      t.type="button";
       t.className="tog mini"+(item.on?" on":" off");
+      t.setAttribute("aria-pressed",String(!!item.on));
       t.innerHTML='<div class="sw"></div><span class="txt">'+esc(item.t)+(item.d?'<small>'+esc(item.d)+"</small>":"")+"</span>";
-      t.onclick=()=>{item.on=!item.on;drawParts();render();};
+      t.onclick=()=>{item.on=!item.on;logAct((item.on?"부품 켜기":"부품 끄기")+" · "+item.t);drawParts();render();};
       body.appendChild(t);
     });
     det.appendChild(body);wrap.appendChild(det);
@@ -808,8 +1040,8 @@ function drawParts(){
 function drawAnim(){
   const bar=$("animBar");bar.innerHTML="";
   const mk=(t,cls,fn)=>{const b=document.createElement("button");b.textContent=t;if(cls)b.className=cls;b.onclick=fn;bar.appendChild(b);};
-  mk("모두 켜기",null,()=>{S.anim.forEach(x=>x.on=true);drawAnim();render();replayPreview();});
-  mk("모두 끄기",null,()=>{S.anim.forEach(x=>x.on=false);drawAnim();render();replayPreview();});
+  mk("모두 켜기",null,()=>{S.anim.forEach(x=>x.on=true);logAct("움직임 모두 켜기");drawAnim();render();replayPreview();});
+  mk("모두 끄기",null,()=>{S.anim.forEach(x=>x.on=false);logAct("움직임 모두 끄기");drawAnim();render();replayPreview();});
   mk("ⓘ 설명 보기",S.showDesc?"on":null,()=>{S.showDesc=!S.showDesc;drawParts();drawAnim();});
 
   const wrap=$("animFolds");wrap.innerHTML="";
@@ -822,46 +1054,40 @@ function drawAnim(){
   det.appendChild(sum);
   const body=document.createElement("div");body.className="foldbody"+(S.showDesc?" showdesc":"");
   S.anim.forEach(item=>{
-    const t=document.createElement("div");
+    const t=document.createElement("button");
+    t.type="button";
     t.className="tog mini"+(item.on?" on":" off");
+    t.setAttribute("aria-pressed",String(!!item.on));
     t.innerHTML='<div class="sw"></div><span class="txt">'+esc(item.t)+
       (item.code?'<code class="term">'+esc(item.code)+"</code>":"")+
       (item.d?'<small>'+esc(item.d)+"</small>":"")+"</span>";
-    t.onclick=()=>{item.on=!item.on;drawAnim();render();replayPreview();};
+    t.onclick=()=>{item.on=!item.on;logAct((item.on?"움직임 켜기":"움직임 끄기")+" · "+item.t);drawAnim();render();replayPreview();};
     body.appendChild(t);
   });
   det.appendChild(body);wrap.appendChild(det);
 }
-function quickLock(box){
-  const q=document.createElement("div");q.className="chips";q.style.marginTop="8px";
-  QUICK_LOCK.forEach(t=>{
-    const has=S.locks.some(x=>x.t===t);
-    const c=document.createElement("button");
-    c.className="chip"+(has?" on":"");c.style.cssText="font-size:11.5px;padding:5px 10px";
-    c.textContent=(has?"":"＋ ")+t;
-    c.onclick=()=>{const i=S.locks.findIndex(x=>x.t===t);
-      if(i>=0)S.locks.splice(i,1);else S.locks.push({t,on:true});
-      toggles($("tg_locks"),"locks","lock");render();};
-    q.appendChild(c);
-  });
-  box.appendChild(q);
-}
+
+/* 직접 추가 입력칸 (Enter로 추가) */
 ["check","ref"].forEach(k=>{
   $("add_"+k).addEventListener("keydown",e=>{
     if(e.key==="Enter"&&e.target.value.trim()){
-      S[k].push({t:e.target.value.trim(),on:true});e.target.value="";
+      S[k].push({t:e.target.value.trim(),on:true});
+      logAct("항목 추가 · "+e.target.value.trim());e.target.value="";
       listChips($(k+"Chips"),k);render();}});
 });
 ["locks","checks"].forEach(k=>{
   $("add_"+k).addEventListener("keydown",e=>{
     if(e.key==="Enter"&&e.target.value.trim()){
-      S[k].push({t:e.target.value.trim(),on:true});e.target.value="";
+      S[k].push({t:e.target.value.trim(),on:true});
+      logAct("항목 추가 · "+e.target.value.trim());e.target.value="";
       toggles($("tg_"+k),k,k==="locks"?"lock":"");render();}});
 });
-$("c_primary").addEventListener("input",e=>{S.primary=e.target.value.toUpperCase();S.theme=null;themeChips();render();});
-$("c_accent").addEventListener("input",e=>{S.accent=e.target.value.toUpperCase();S.theme=null;themeChips();render();});
+$("c_primary").addEventListener("input",e=>{S.primary=e.target.value.toUpperCase();S.theme=null;logAct("기본색 "+S.primary);themeChips();render();});
+$("c_accent").addEventListener("input",e=>{S.accent=e.target.value.toUpperCase();S.theme=null;logAct("강조색 "+S.accent);themeChips();render();});
 
-/* ══════════ 프리셋 ══════════ */
+/* ══════════════════════════════════════════
+   5. 프리셋 · 전체 다시 그리기
+══════════════════════════════════════════ */
 function applyPreset(keepText){
   const p=PRESETS[preset];
   if(!keepText){el.tprog.value=p.tabs[0];el.tcheck.value=p.tabs[1];el.tref.value=p.tabs[2];el.ttool.value=p.tabs[3];}
@@ -882,14 +1108,14 @@ function applyPreset(keepText){
 function drawAll(){
   simpleChips($("useChips"),USE,S.use);
   simpleChips($("whenChips"),WHEN,S.when);
-  singleChips($("unitChips"),UNITS,"unit");
-  singleChips($("segChips"),SEGS,"segs");
-  singleChips($("deployChips"),DEPLOY,"deploy");
-  singleChips($("verifyChips"),VERIFY,"verify");
-  singleChips($("fontChips"),FONTS,"font",false);
-  singleChips($("radiusChips"),RADIUS,"radius",false);
-  singleChips($("densityChips"),DENSITY,"density",false);
-  singleChips($("shadowChips"),SHADOW,"shadow",false);
+  singleChips($("unitChips"),UNITS,"unit",true,"진행 단위");
+  singleChips($("segChips"),SEGS,"segs",true,"구간 수");
+  singleChips($("deployChips"),DEPLOY,"deploy",true,"쓰임새");
+  singleChips($("verifyChips"),VERIFY,"verify",true,"검증 방식");
+  singleChips($("fontChips"),FONTS,"font",false,"글꼴");
+  singleChips($("radiusChips"),RADIUS,"radius",false,"모서리");
+  singleChips($("densityChips"),DENSITY,"density",false,"여백");
+  singleChips($("shadowChips"),SHADOW,"shadow",false,"그림자");
   drawAnim();
   themeChips();
   $("c_primary").value=S.primary;$("c_accent").value=S.accent;
@@ -908,7 +1134,8 @@ function drawRisks(){
   Object.keys(p.risks).forEach(k=>{
     const c=document.createElement("button");c.className="chip"+(S.risks.has(k)?" on":"");c.textContent=k;
     c.onclick=()=>{S.risks.has(k)?S.risks.delete(k):S.risks.add(k);
-      c.classList.toggle("on",S.risks.has(k));syncRiskMap();render();};
+      c.classList.toggle("on",S.risks.has(k));
+      logAct((S.risks.has(k)?"걱정 선택":"걱정 해제")+" · "+k);syncRiskMap();render();};
     box.appendChild(c);
   });
   syncRiskMap();
@@ -925,18 +1152,110 @@ Object.keys(PRESETS).forEach(name=>{
   b.className="preset"+(name===preset?" on":"");b.textContent=name;
   b.onclick=()=>{preset=name;
     document.querySelectorAll(".preset").forEach(x=>x.classList.remove("on"));b.classList.add("on");
-    applyPreset(false);render();};
+    logAct("상황 — "+name);applyPreset(false);render();};
   pWrap.appendChild(b);
 });
 
-const STN=["설계","모양","진단","내용","잠금","검증"];
+/* ══════════════════════════════════════════
+   6. 코스맵 · 역 이동 · 상단 노선도
+══════════════════════════════════════════ */
+const cmapList=$("cmapList");
+STATION_META.forEach((m,i)=>{
+  const d=document.createElement("button");
+  d.type="button";
+  d.className="cmi"+(m.guard?" guard":"");d.id="cm"+(i+1);
+  d.innerHTML='<span class="num">0'+(i+1)+'</span><span><span class="tt">'+esc(m.tt)+'</span><span class="dd">'+esc(m.dd)+"</span></span>";
+  d.onclick=()=>showStation(i+1);
+  cmapList.appendChild(d);
+});
 const stWrap=$("stations");
-STN.forEach(s=>{const d=document.createElement("div");d.className="stn";
-  d.innerHTML='<i></i><u>'+s+'</u>';stWrap.appendChild(d);});
+STATION_META.forEach(m=>{const d=document.createElement("div");d.className="stn";
+  d.innerHTML='<i></i><u>'+m.tag+'</u>';stWrap.appendChild(d);});
 const progLine=document.createElement("div");progLine.className="prog";
 stWrap.insertBefore(progLine,stWrap.firstChild);
 
-/* ══════════ 색 미리보기 ══════════ */
+let pvAutoDone=false,autoPv=false;    // 미리보기 자동 전환은 첫 진입 1회만
+function updatePvDot(){$("atPv").classList.toggle("dot",cur===2&&!$("ap_pv").classList.contains("on"));}
+function showStation(i){
+  cur=Math.min(6,Math.max(1,i));
+  document.querySelectorAll(".st-page").forEach(p=>p.classList.toggle("on",+p.dataset.st===cur));
+  document.querySelectorAll(".cmi").forEach((c,idx)=>c.classList.toggle("act",idx+1===cur));
+  $("navPrev").disabled=cur===1;
+  $("navNext").textContent=cur===6?"📄 프롬프트 확인":"다음 역 →";
+  $("navPos").textContent="STATION 0"+cur+" / 06";
+  S.visited.add(cur);                 // 직접 열어본 역만 완료로 집계
+  if(cur===2&&!pvAutoDone){pvAutoDone=true;autoPv=true;setAsideTab("pv");}
+  else if(cur!==2&&autoPv){autoPv=false;setAsideTab("doc");}
+  updatePvDot();
+  window.scrollTo({top:0,behavior:"auto"});
+  render();
+}
+$("navPrev").onclick=()=>showStation(cur-1);
+$("navNext").onclick=()=>{
+  if(cur<6){showStation(cur+1);return;}
+  setAsideTab("doc");
+  const ds=document.querySelector(".doc-side");
+  if(getComputedStyle($("peekBtn")).display!=="none"&&!ds.classList.contains("open"))$("peekBtn").click();
+};
+
+/* 역 안의 개념/조작 탭 */
+document.querySelectorAll(".st-tabs button").forEach(b=>{
+  b.onclick=()=>{
+    const page=b.closest(".st-page");
+    page.querySelectorAll(".st-tabs button").forEach(x=>x.classList.toggle("on",x===b));
+    page.querySelectorAll(".st-pane").forEach(p=>p.classList.toggle("on",p.dataset.t===b.dataset.t));
+  };
+});
+
+/* 확인하기(자기점검) 탭 — 패널 생성과 그리기 */
+document.querySelectorAll(".st-page").forEach(pg=>{
+  const pane=document.createElement("div");
+  pane.className="st-pane check";pane.dataset.t="check";
+  pane.innerHTML='<div class="tip">📍 <b>스스로 점검</b> — 체크 여부는 진행률이나 프롬프트에 들어가지 않습니다. \'아직\'이라고 느끼면 직접 조작 탭으로 돌아가 다듬으면 됩니다.</div>'+
+    '<div class="toggles" id="self'+pg.dataset.st+'"></div>';
+  pg.appendChild(pane);
+});
+function selfArr(i){
+  const qs=SELF_CHECKS[i-1];
+  const old=Array.isArray(S.self[i])?S.self[i]:[];
+  if(old.length!==qs.length)S.self[i]=qs.map((_,j)=>!!old[j]);
+  else S.self[i]=old;
+  return S.self[i];
+}
+function drawSelf(){
+  for(let i=1;i<=6;i++){
+    const box=$("self"+i);if(!box)continue;
+    const arr=selfArr(i);box.innerHTML="";
+    SELF_CHECKS[i-1].forEach((q,j)=>{
+      const b=document.createElement("button");
+      b.type="button";
+      b.className="tog"+(arr[j]?" on":"");
+      b.setAttribute("aria-pressed",String(!!arr[j]));
+      b.innerHTML='<div class="sw"></div><span class="txt">'+esc(q)+"</span>";
+      b.onclick=()=>{arr[j]=!arr[j];
+        b.className="tog"+(arr[j]?" on":"");
+        b.setAttribute("aria-pressed",String(arr[j]));
+        logAct((arr[j]?"자기점검 ✓":"자기점검 해제")+" · "+q);render();};
+      box.appendChild(b);
+    });
+  }
+}
+drawSelf();
+
+/* 오른쪽 패널 탭 */
+function setAsideTab(t){
+  $("atDoc").classList.toggle("on",t==="doc");
+  $("atPv").classList.toggle("on",t==="pv");
+  $("ap_doc").classList.toggle("on",t==="doc");
+  $("ap_pv").classList.toggle("on",t==="pv");
+  updatePvDot();
+}
+$("atDoc").onclick=()=>{autoPv=false;setAsideTab("doc");};
+$("atPv").onclick=()=>{autoPv=false;setAsideTab("pv");};
+
+/* ══════════════════════════════════════════
+   7. 스타일 미리보기
+══════════════════════════════════════════ */
 function radiusPx(){return S.radius==="둥글게"?16:S.radius==="살짝"?8:4;}
 function fontCss(){
   return S.font==="Noto Sans KR"?"'Noto Sans KR',sans-serif":
@@ -956,10 +1275,10 @@ function renderPreview(){
   $("pv_body").style.cssText="padding:"+pad+" 11px;display:flex;flex-direction:column;gap:"+gap+";font-family:"+ff;
   const pills=$("pv_pills");pills.innerHTML="";
   ["1일차","2일차","3일차"].forEach((t,i)=>{
-    const el2=document.createElement("span");el2.textContent=t;
-    el2.style.cssText="font-family:"+ff+";font-size:10px;font-weight:700;padding:5px 10px;border-radius:"+(r>=16?"999px":r+"px")+";transition:"+tr+";"+
+    const sp=document.createElement("span");sp.textContent=t;
+    sp.style.cssText="font-family:"+ff+";font-size:10px;font-weight:700;padding:5px 10px;border-radius:"+(r>=16?"999px":r+"px")+";transition:"+tr+";"+
       (i===0?"background:"+S.primary+";color:#fff;box-shadow:"+shadowCss():"background:#fff;color:#6B7280;border:1px solid #E5E7EB");
-    pills.appendChild(el2);
+    pills.appendChild(sp);
   });
   $("pv_card").style.cssText="font-family:"+ff+";padding:"+pad+";border:1px solid "+S.primary+"22;background:#fff;border-radius:"+r+"px;box-shadow:"+shadowCss()+";transition:"+tr;
   $("pv_time").style.cssText="color:"+S.primary+";font-size:"+(S.density==="넉넉하게"?"13px":"11.5px")+";display:block;margin-bottom:3px;font-weight:700";
@@ -969,6 +1288,15 @@ function renderPreview(){
   if(!fill.style.width)fill.style.width="62%";
   $("hex_primary").textContent=S.primary;
   $("hex_accent").textContent=S.accent;
+  /* 모바일 인라인 미니 미리보기 (2번 역) */
+  const mp=$("miniPv");
+  if(mp){
+    mp.style.background=S.bg;mp.style.fontFamily=ff;
+    $("mp_bar").style.cssText="padding:7px 10px;font-size:11px;font-weight:700;background:"+S.tint+";color:"+S.accent+";font-family:"+ff;
+    $("mp_pill").style.cssText="flex:0 0 auto;font-size:10px;font-weight:700;padding:4px 10px;border-radius:"+(r>=16?"999px":r+"px")+";background:"+S.primary+";color:#fff;box-shadow:"+shadowCss()+";font-family:"+ff;
+    $("mp_card").style.cssText="flex:1;padding:"+(S.density==="넉넉하게"?"8px 10px":"5px 8px")+";background:#fff;border:1px solid "+S.primary+"22;border-radius:"+r+"px;box-shadow:"+shadowCss()+";font-size:10.5px;color:#6B7280;font-family:"+ff;
+    $("mp_time").style.cssText="color:"+S.primary+";font-weight:700;margin-right:5px";
+  }
 }
 function replayPreview(){
   const card=$("pv_card"),fill=$("pv_prog").firstElementChild;
@@ -980,8 +1308,11 @@ function replayPreview(){
   fill.style.transition=animOn("진행률 차오름")?"width .9s cubic-bezier(.2,.8,.2,1)":"none";
   fill.style.width="62%";
 }
+$("replayBtn").onclick=replayPreview;
 
-/* ══════════ 문서 생성 ══════════ */
+/* ══════════════════════════════════════════
+   8. 프롬프트 문서 생성 (Markdown + 화면 표시)
+══════════════════════════════════════════ */
 const v=k=>el[k].value.trim();
 function tabsLine(){return[v("tprog")||"진행",v("tcheck")||"점검",v("tref")||"참조",v("ttool")||"도구"];}
 function pick(list,label){const d=list.find(x=>x.label===label);return d?d.text:"";}
@@ -1056,7 +1387,9 @@ function buildMarkdown(){
   return m;
 }
 
-/* ══════════ 렌더 ══════════ */
+/* ══════════════════════════════════════════
+   9. 전체 렌더 — 문서·진행률·힌트
+══════════════════════════════════════════ */
 function render(){
   renderPreview();
   const t=tabsLine(),g=S.gate,ph=x=>'<span class="ph">'+x+'</span>';
@@ -1120,6 +1453,7 @@ function render(){
     ?'통째로 복사해 <b>AI 대화창의 첫 메시지</b>로 붙여넣으세요. AI가 1단계를 마치고 멈추면 <b>「승인」 또는 「수정 요청」</b>을 보내며 이어갑니다. 되돌리는 비용이 크거나 학생에게 그대로 나갈 결과물일 때 이 모드를 쓰세요.'
     :'통째로 복사해 <b>AI 대화창의 첫 메시지</b>로 붙여넣으세요. AI가 <b>모아 올 값 목록</b>을 표로 먼저 줄 겁니다. 지도 링크와 시각을 채워 다시 보내면 완성본이 나와요. 프롬프트가 해주는 건 잘 짜인 80%까지고, 나머지는 값과 두세 번의 수정입니다.';
 
+  /* 진행 상태 */
   const done=[
     !!v("title")&&!!v("purpose")&&S.use.size>0,
     !!v("tprog")&&!!v("tcheck")&&!!v("tref")&&!!v("ttool")&&!!S.font&&!!S.radius,
@@ -1129,58 +1463,49 @@ function render(){
     on(S.checks).length>0&&!!S.verify
   ];
   done.forEach((d,i)=>{
-    const st=$("st"+(i+1));st.classList.toggle("done",d);
-    st.querySelector(".dot").textContent=d?"✓":String(i+1);
-    stWrap.querySelectorAll(".stn")[i].classList.toggle("on",d);
+    const auto=d&&!S.visited.has(i+1);       // 채워졌지만 아직 안 열어본 역 = 자동 채움
+    const it=$("cm"+(i+1));
+    it.classList.toggle("done",d&&!auto);
+    it.classList.toggle("auto",auto);
+    it.querySelector(".num").textContent=d?"✓":"0"+(i+1);
+    const stn=stWrap.querySelectorAll(".stn")[i];
+    stn.classList.toggle("on",d&&!auto);
+    stn.classList.toggle("auto",auto);
   });
-  const n=done.filter(Boolean).length,pct=Math.round(n/6*100);
+  /* 확인하기 탭 배지 (n/총) */
+  document.querySelectorAll(".st-page").forEach(pg=>{
+    const arr=selfArr(+pg.dataset.st);
+    const b=pg.querySelector('.st-tabs button[data-t="check"]');
+    if(b){const k=arr.filter(Boolean).length;
+      b.textContent="확인하기 "+k+"/"+arr.length;
+      b.classList.toggle("ok",k===arr.length);}
+  });
+  const n=done.filter((d,i)=>d&&S.visited.has(i+1)).length,pct=Math.round(n/6*100);
   $("partsCnt").textContent=onFull(S.parts).length+" / "+S.parts.length+" 켜짐";
   $("animCnt").textContent=onFull(S.anim).length+" / "+S.anim.length+" 켜짐";
   $("checksCnt").textContent=on(S.checks).length+" / "+S.checks.length;
   $("stepCount").textContent=n+" / 6 역";
   $("pct").textContent=pct+"%";
   progLine.style.width=(n?((n-1)/5*100):0)+"%";
-  $("rfill").style.height=pct+"%";
   $("hint").textContent=
     pct===100?"완성 ✔ 붙여넣되, 최종 확인은 선생님 몫입니다.":
     n>=5?"거의 다 왔어요 — 마지막 역은 넘겨받기 전 확인입니다.":
     n>=3?"좋아요 — 4번 역의 화면 부품을 빠뜨리면 밋밋해집니다.":
     n>=1?"이어서 채워 보세요.":"1번 역부터 순서대로 채워 보세요.";
-  if(typeof store!=="undefined")store.set(snapshot());
+  store.set(snapshot());
   const pk=$("peekBtn"),ds=document.querySelector(".doc-side");
   if(pk&&ds&&!ds.classList.contains("open"))pk.textContent="📄 미리보기 · "+n+"/6";
 }
 TXT.forEach(k=>el[k].addEventListener("input",render));
 
+/* ══════════════════════════════════════════
+   10. 모드(게이트) · 복사 · 저장 · 불러오기
+══════════════════════════════════════════ */
 function setGate(on_){S.gate=on_;
   $("modeOn").classList.toggle("on",on_);$("modeOff").classList.toggle("on",!on_);render();}
-$("replayBtn").onclick=replayPreview;
-$("modeOn").onclick=()=>setGate(true);
-$("modeOff").onclick=()=>setGate(false);
+$("modeOn").onclick=()=>{logAct("승인 게이트 켜기");setGate(true);};
+$("modeOff").onclick=()=>{logAct("승인 게이트 끄기");setGate(false);};
 
-document.querySelectorAll(".etab").forEach(t=>{
-  t.onclick=()=>{const p=t.dataset.p,open_=t.classList.contains("on");
-    document.querySelectorAll(".etab").forEach(x=>x.classList.remove("on"));
-    document.querySelectorAll(".epanel").forEach(x=>x.classList.remove("on"));
-    if(!open_){t.classList.add("on");document.querySelector('.epanel[data-p="'+p+'"]').classList.add("on");}};
-});
-
-/* ══════════ 저장 ══════════ */
-const KEY="guide-app-builder-v7";
-const store={
-  get(){try{return localStorage.getItem(KEY)}catch(e){return null}},
-  set(x){try{localStorage.setItem(KEY,x)}catch(e){}},
-  del(){try{localStorage.removeItem(KEY)}catch(e){}}
-};
-function snapshot(){
-  const texts={};TXT.forEach(k=>texts[k]=el[k].value);
-  return JSON.stringify({preset,texts,gate:S.gate,
-    use:[...S.use],when:[...S.when],risks:[...S.risks],
-    unit:S.unit,segs:S.segs,verify:S.verify,deploy:S.deploy,
-    theme:S.theme,primary:S.primary,accent:S.accent,bg:S.bg,tint:S.tint,
-    font:S.font,radius:S.radius,density:S.density,shadow:S.shadow,anim:S.anim,
-    parts:S.parts,check:S.check,ref:S.ref,tools:S.tools,locks:S.locks,checks:S.checks});
-}
 function applyState(d){
   preset=d.preset&&PRESETS[d.preset]?d.preset:preset;
   document.querySelectorAll(".preset").forEach(b=>b.classList.toggle("on",b.textContent===preset));
@@ -1188,6 +1513,7 @@ function applyState(d){
   S.use=new Set(d.use||[]);S.when=new Set(d.when||[]);S.risks=new Set(d.risks||[]);
   S.unit=d.unit||null;S.segs=d.segs||null;
   S.verify=d.verify||null;S.deploy=d.deploy||null;
+  S.visited=new Set(d.visited||[]);S.self=d.self||{};
   S.theme=("theme"in d)?d.theme:S.theme;
   S.primary=d.primary||S.primary;S.accent=d.accent||S.accent;
   S.bg=d.bg||S.bg;S.tint=d.tint||S.tint;
@@ -1201,11 +1527,9 @@ function applyState(d){
   S.tools=d.tools&&d.tools.length?d.tools:p.tools.map(t=>({t,on:true}));
   S.locks=d.locks&&d.locks.length?d.locks:p.locks.map(t=>({t,on:true}));
   S.checks=d.checks&&d.checks.length?d.checks:BASE_CHECKS.map(t=>({t,on:true}));
-  drawAll();setGate(!!d.gate);
+  drawAll();drawSelf();setGate(!!d.gate);
+  showStation(d.station||1);
 }
-
-applyPreset(false);
-(function(){const raw=store.get();if(raw){try{applyState(JSON.parse(raw));return}catch(e){}}render();})();
 
 const SAMPLE={preset:"수학여행·현장체험",gate:false,
  texts:{title:"2학년 수학여행 안내 (경주 2박 3일)",
@@ -1225,31 +1549,32 @@ $("sampleBtn").onclick=()=>{
     check:p.check.map(t=>({t,on:true})),ref:p.ref.map(t=>({t,on:true})),
     tools:p.tools.map(t=>({t,on:true})),locks:p.locks.map(t=>({t,on:true})),
     checks:BASE_CHECKS.map(t=>({t,on:true}))}));
+  logAct("예시 데이터 채우기");
   $("sampleBtn").textContent="✨ 예시가 채워졌어요 — 자유롭게 고쳐보세요";
   setTimeout(()=>$("sampleBtn").textContent="✨ 예시로 구경하기",2600);
 };
 $("clearBtn").onclick=()=>{store.del();
   S.use.clear();S.when.clear();S.risks.clear();
   S.unit=null;S.segs=null;S.verify=null;S.deploy=null;
-  applyPreset(false);
+  S.visited=new Set();S.self={};
+  applyPreset(false);drawSelf();
   ["title","purpose","pin","style","content"].forEach(k=>el[k].value="");
-  setGate(false);};
+  logAct("전체 지우기");setGate(false);showStation(1);};
 
-const docSide=document.querySelector(".doc-side"),peek=$("peekBtn");
-peek.onclick=()=>{const open_=docSide.classList.toggle("open");
-  peek.textContent=open_?"✕ 닫고 이어서 입력":"📄 미리보기";
-  if(!open_)render();};
-
-$("exportBtn").onclick=()=>{
+function exportSettings(){
   const name=(el.title.value.trim()||"guide-app").replace(/[\\/:*?"<>|\s]+/g,"_").slice(0,40);
   const b=new Blob([snapshot()],{type:"application/json;charset=utf-8"});
   const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name+"_설정.json";a.click();
-  URL.revokeObjectURL(a.href);};
+  URL.revokeObjectURL(a.href);logAct("설정 파일 저장");
+}
+$("exportBtn").onclick=exportSettings;
+$("nudgeSave").onclick=()=>{exportSettings();$("copyNudge").hidden=true;};
+$("nudgeClose").onclick=()=>{$("copyNudge").hidden=true;};
 $("importBtn").onclick=()=>$("importFile").click();
 $("importFile").addEventListener("change",e=>{
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=()=>{try{applyState(JSON.parse(r.result));}
+  r.onload=()=>{try{applyState(JSON.parse(r.result));logAct("설정 불러오기 · "+f.name);}
     catch(err){alert("설정 파일을 읽지 못했어요. 이 앱에서 저장한 .json 파일이 맞는지 확인해 주세요.");}
     e.target.value="";};
   r.readAsText(f,"utf-8");});
@@ -1260,11 +1585,31 @@ $("copyBtn").onclick=async()=>{
   catch(e){const ta=document.createElement("textarea");ta.value=buildMarkdown();
     document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();}
   b.textContent="✔ 복사 완료";b.classList.add("done");
+  $("copyNudge").hidden=false;        // 프롬프트를 가져갈 때 설정 저장도 함께 유도
   setTimeout(()=>{b.textContent="⧉ 전체 복사";b.classList.remove("done")},1800);};
 $("dlBtn").onclick=()=>{
   const b=new Blob([buildMarkdown()],{type:"text/markdown;charset=utf-8"});
   const a=document.createElement("a");a.href=URL.createObjectURL(b);
-  a.download=S.gate?"GUIDE-APP-HARNESS.md":"GUIDE-APP.md";a.click();URL.revokeObjectURL(a.href);};
+  a.download=S.gate?"GUIDE-APP-HARNESS.md":"GUIDE-APP.md";a.click();URL.revokeObjectURL(a.href);
+  $("copyNudge").hidden=false;};
+
+const docSide=document.querySelector(".doc-side"),peek=$("peekBtn");
+peek.onclick=()=>{const open_=docSide.classList.toggle("open");
+  peek.textContent=open_?"✕ 닫고 이어서 입력":"📄 미리보기";
+  if(!open_)render();};
+
+/* ══════════════════════════════════════════
+   11. 초기화
+══════════════════════════════════════════ */
+applyPreset(false);
+(function(){
+  const raw=store.get();
+  if(raw){try{applyState(JSON.parse(raw));return}catch(e){}}
+  /* 구버전(v7) 데이터가 있으면 1회 이관 — 기존 작업은 전부 '직접 확인한 역'으로 인정 */
+  const old=store.getOld();
+  if(old){try{const d=JSON.parse(old);d.visited=[1,2,3,4,5,6];applyState(d);return}catch(e){}}
+  showStation(1);
+})();
 </script>
 </body>
 </html>
