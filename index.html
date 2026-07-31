@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>가이드앱 빌더 — 현장 안내 앱을 설계하는 연습장</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@500;700;800&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#16232B; --ground-2:#1E303A; --ground-3:#263B47;
+  --line:#33505E; --line-soft:#2A4453;
+  --route:#4EC3B4; --route-dim:#2E8C81;
+  --stamp:#E4734A; --stamp-dim:#B45734;
+  --paper:#F7F3E9; --paper-line:#E0D9C7; --paper-2:#EFE8D8;
+  --doc-ink:#23282A; --doc-dim:#8A8578;
+  --txt:#E6EDF0; --txt-2:#9DB4C0; --txt-3:#67879A;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Pretendard Variable',Pretendard,sans-serif;background:var(--ground);color:var(--txt);-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--route);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+header{padding:24px 24px 16px;border-bottom:1px solid var(--line);display:flex;align-items:flex-end;justify-content:space-between;gap:22px;flex-wrap:wrap}
+.brand h1{font-family:'Gothic A1',sans-serif;font-weight:800;font-size:clamp(21px,4vw,29px);letter-spacing:-.03em}
+.brand h1 em{font-style:normal;color:var(--route)}
+.brand p{margin-top:7px;font-size:13.5px;color:var(--txt-2);max-width:620px;line-height:1.6}
+.brand p b{color:#CFE3E0;font-weight:700}
+
+.metro{flex:0 0 auto;min-width:290px}
+.metro-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:11px}
+.metro-top span{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:var(--txt-3)}
+.metro-top b{font-family:'Space Mono',monospace;font-size:15px;color:var(--route)}
+.stations{position:relative;display:flex;justify-content:space-between;padding:0 4px}
+.stations::before{content:"";position:absolute;left:9px;right:9px;top:6px;height:2px;background:var(--line)}
+.stations .prog{position:absolute;left:9px;top:6px;height:2px;width:0;background:var(--route);transition:width .45s cubic-bezier(.2,.8,.2,1)}
+.stn{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:6px;width:14px}
+.stn i{width:14px;height:14px;border-radius:50%;border:2px solid var(--line);background:var(--ground);display:block;transition:.3s}
+.stn.on i{background:var(--route);border-color:var(--route)}
+.stn u{font-family:'Space Mono',monospace;font-size:9.5px;color:var(--txt-3);text-decoration:none;white-space:nowrap;transition:.3s}
+.stn.on u{color:var(--route)}
+.metro-hint{margin-top:12px;font-size:11.5px;color:var(--txt-3);min-height:16px}
+
+.wrap{display:grid;grid-template-columns:minmax(400px,47%) 1fr;align-items:start}
+@media(max-width:980px){.wrap{grid-template-columns:1fr}}
+.panel{padding:24px 24px 60px;border-right:1px solid var(--line)}
+.route{position:relative;padding-left:32px}
+.route::before{content:"";position:absolute;left:10px;top:18px;bottom:24px;width:2px;background:var(--line)}
+.route .rfill{position:absolute;left:10px;top:18px;width:2px;height:0;background:var(--route);transition:height .45s cubic-bezier(.2,.8,.2,1)}
+
+.step{position:relative;margin-bottom:14px;border:1px solid var(--line);border-radius:13px;background:var(--ground-2);overflow:hidden}
+.step .dot{position:absolute;left:-31px;top:17px;z-index:3;width:20px;height:20px;border-radius:50%;border:2px solid var(--line);background:var(--ground);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;color:var(--txt-3);transition:.25s}
+.step.done .dot{background:var(--route);border-color:var(--route);color:#0E1F26}
+.step.guard .dot{border-color:var(--stamp-dim)}
+.step.guard.done .dot{background:var(--stamp);border-color:var(--stamp)}
+.step-h{display:flex;flex-direction:column;gap:3px;padding:15px 17px 4px}
+.step-h .t{font-family:'Gothic A1',sans-serif;font-weight:700;font-size:15.5px;letter-spacing:-.01em}
+.step-h .d{font-size:12px;color:var(--txt-3);line-height:1.5}
+.step-b{padding:11px 17px 17px}
+
+.field{margin-bottom:14px}
+.field>label{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
+.field .name{font-weight:700;font-size:13.5px}
+.field .opt{font-size:11px;color:var(--txt-3)}
+input[type=text],textarea{width:100%;font-family:inherit;font-size:14px;color:#EEF4F6;background:var(--ground-3);border:1px solid var(--line-soft);border-radius:8px;padding:10px 13px;line-height:1.6;transition:border-color .15s}
+textarea{resize:vertical;min-height:70px}
+input:focus,textarea:focus{outline:none;border-color:var(--route)}
+input::placeholder,textarea::placeholder{color:#5A7788}
+.quad{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+@media(max-width:520px){.quad{grid-template-columns:1fr}}
+.quad .qcell label{display:block;font-size:11px;color:var(--txt-3);margin-bottom:4px;font-family:'Space Mono',monospace;letter-spacing:.04em}
+
+.group{margin-bottom:14px}
+.glabel{display:flex;align-items:baseline;gap:7px;margin-bottom:7px}
+.gname{font-weight:700;font-size:13.5px}
+.gtype{font-family:'Space Mono',monospace;font-size:10px;color:var(--txt-3);letter-spacing:.05em}
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip{font-family:inherit;font-size:12.5px;font-weight:600;color:#C3D6DD;background:var(--ground-3);border:1px solid var(--line-soft);border-radius:7px;padding:7px 12px;cursor:pointer;transition:.15s;text-align:left}
+.chip:hover{border-color:var(--route)}
+.chip.on{background:var(--route);border-color:var(--route);color:#0E1F26}
+.chip.on::before{content:"✓ ";font-weight:800}
+.presets{display:flex;gap:7px;flex-wrap:wrap}
+.preset{font-family:inherit;font-size:12.5px;font-weight:600;color:#C3D6DD;background:var(--ground-3);border:1px solid var(--line-soft);border-radius:20px;padding:8px 15px;cursor:pointer;transition:.18s}
+.preset:hover{border-color:var(--route);color:#fff}
+.preset.on{background:var(--route);border-color:var(--route);color:#0E1F26}
+.util{display:flex;gap:7px;flex-wrap:wrap;margin:2px 0 13px}
+.util .chip{font-size:12px;padding:6px 11px}
+
+/* 테마 칩 — 색 동그라미가 붙음 */
+.theme{display:flex;align-items:center;gap:7px;font-family:inherit;font-size:12.5px;font-weight:600;color:#C3D6DD;background:var(--ground-3);border:1px solid var(--line-soft);border-radius:8px;padding:6px 11px 6px 7px;cursor:pointer;transition:.15s}
+.theme:hover{border-color:var(--route)}
+.theme.on{border-color:var(--route);background:rgba(78,195,180,.12);color:#fff}
+.theme .sw2{display:flex;gap:3px}
+.theme .sw2 i{width:13px;height:13px;border-radius:50%;display:block;border:1px solid rgba(255,255,255,.25)}
+
+.picker{display:flex;gap:10px;flex-wrap:wrap;margin-top:9px}
+.picker div{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--txt-2)}
+.picker input[type=color]{width:38px;height:30px;padding:2px;border:1px solid var(--line-soft);border-radius:7px;background:var(--ground-3);cursor:pointer}
+.picker code{font-family:'Space Mono',monospace;font-size:11px;color:var(--txt-3)}
+
+/* 색 미리보기 */
+.preview{margin-top:11px;border:1px solid var(--line-soft);border-radius:10px;overflow:hidden;background:#fff}
+.pv-bar{padding:8px 11px;display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700}
+.pv-body{padding:10px 11px 12px;display:flex;flex-direction:column;gap:7px}
+.pv-pills{display:flex;gap:5px}
+.pv-pills span{font-size:10px;font-weight:700;padding:4px 9px}
+.pv-card{padding:9px 10px;border:1px solid #E5E7EB;background:#fff}
+.pv-card b{display:block;font-size:11.5px;margin-bottom:3px}
+.pv-card small{font-size:10.5px;color:#6B7280}
+.pv-cap{font-size:11px;color:var(--txt-3);margin-top:7px;line-height:1.6}
+
+.fold{border:1px solid var(--line-soft);border-radius:9px;background:var(--ground-3);margin-bottom:6px;overflow:hidden}
+.fold>summary{list-style:none;cursor:pointer;padding:10px 11px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;font-weight:700;color:#DCE7EB;transition:.15s}
+.fold>summary:hover{color:#fff}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary .cnt{font-family:'Space Mono',monospace;font-size:10.5px;color:#8FD9CE;background:rgba(78,195,180,.12);border:1px solid var(--route-dim);border-radius:999px;padding:2px 9px;flex:0 0 auto}
+.fold .arw{display:inline-block;color:var(--txt-3);font-size:9px;transition:transform .2s;margin-right:5px}
+.fold[open] .arw{transform:rotate(90deg)}
+.fold .foldbody{padding:0 9px 10px;display:flex;flex-direction:column;gap:5px}
+.tog.mini{padding:7px 9px;font-size:12.4px;align-items:center}
+.tog.mini .txt small{display:none}
+.foldbody.showdesc .tog.mini .txt small{display:block}
+.foldbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.foldbar button{font-family:inherit;font-size:11.5px;font-weight:600;color:#B3C7D0;background:var(--ground-3);border:1px solid var(--line-soft);border-radius:7px;padding:5px 10px;cursor:pointer;transition:.15s}
+.foldbar button:hover{border-color:var(--route)}
+.foldbar button.on{background:var(--route);border-color:var(--route);color:#0E1F26}
+code.term{font-family:'Space Mono',monospace;font-size:10px;color:#8FD9CE;background:rgba(78,195,180,.13);border:1px solid var(--route-dim);border-radius:4px;padding:1px 5px;margin-left:5px;white-space:nowrap}
+.chip.on code.term{color:#0E1F26;background:rgba(255,255,255,.45);border-color:rgba(0,0,0,.15)}
+.pv-prog{height:8px;border-radius:999px;background:#E5E7EB;overflow:hidden}
+.pv-prog i{display:block;height:100%;width:0;border-radius:999px}
+.pv-replay{margin-top:9px;font-family:inherit;font-size:11.5px;font-weight:700;color:#B3C7D0;background:var(--ground-3);border:1px solid var(--line-soft);border-radius:7px;padding:6px 12px;cursor:pointer}
+.pv-replay:hover{border-color:var(--route);color:#fff}
+@keyframes pvFade{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+@keyframes pvSlide{from{transform:translateY(30px);opacity:.15}to{transform:none;opacity:1}}
+@keyframes pvShake{0%,100%{transform:none}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.pv-fade{animation:pvFade .45s ease-out}
+.pv-slide{animation:pvSlide .5s cubic-bezier(.2,.8,.2,1)}
+.pv-shake{animation:pvShake .4s ease-in-out}
+.pv-press:active{transform:scale(.93)}
+.riskmap{margin-top:10px;font-size:12px;color:#A9D6CF;line-height:1.75;border-left:2px solid var(--route-dim);padding-left:11px;display:none}
+.riskmap.show{display:block}
+.riskmap b{color:#D3EDE8}
+
+.toggles{display:flex;flex-direction:column;gap:6px}
+.tog{display:flex;align-items:flex-start;gap:9px;background:var(--ground-3);border:1px solid var(--line-soft);border-radius:8px;padding:9px 11px;cursor:pointer;transition:.15s;font-size:12.8px;line-height:1.55;color:#DCE7EB}
+.tog:hover{border-color:var(--line)}
+.tog .sw{flex:0 0 auto;width:32px;height:18px;border-radius:10px;background:#3A5666;position:relative;transition:.2s;margin-top:1px}
+.tog .sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#8CA8B6;transition:.2s}
+.tog.on .sw{background:var(--route)}
+.tog.on .sw::after{left:16px;background:#0E1F26}
+.tog.lock.on .sw{background:var(--stamp)}
+.tog.off{opacity:.42}
+.tog.off .txt{text-decoration:line-through;text-decoration-color:#6E8B9B}
+.tog .txt small{display:block;font-size:11px;color:var(--txt-3);margin-top:2px;text-decoration:none}
+
+.why{background:rgba(228,115,74,.09);border:1px solid var(--stamp-dim);border-radius:9px;padding:11px 13px;font-size:12.3px;line-height:1.7;color:#F0C4AF;margin-bottom:13px}
+.why b{color:var(--stamp)}
+.tip{background:rgba(78,195,180,.08);border:1px solid var(--route-dim);border-radius:9px;padding:10px 12px;font-size:12.2px;line-height:1.7;color:#AEDCD5;margin-bottom:12px}
+.tip b{color:var(--route)}
+
+.doc-side{background:var(--paper);color:var(--doc-ink);display:flex;flex-direction:column;position:sticky;top:0;max-height:100vh;overflow-y:auto}
+@media(max-width:980px){.doc-side{position:static;max-height:none}}
+#peekBtn{display:none;font-family:inherit}
+@media(max-width:980px){
+  #peekBtn{display:flex;position:fixed;bottom:14px;right:14px;z-index:60;background:var(--route);color:#0E1F26;border:none;border-radius:24px;padding:13px 18px;font-weight:700;font-size:14px;box-shadow:0 4px 16px rgba(0,0,0,.45);cursor:pointer;align-items:center;gap:6px}
+  .doc-side.open{position:fixed;inset:0;z-index:50;max-height:none;overflow-y:auto}
+}
+.doc-bar{position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--paper-line);padding:11px 24px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.doc-bar .fname{font-family:'Space Mono',monospace;font-size:12.5px;color:var(--doc-dim)}
+.doc-bar .fname b{color:var(--doc-ink)}
+.doc-bar .count{font-family:'Space Mono',monospace;font-size:11.5px;color:#6B6558;background:var(--paper-2);border-radius:12px;padding:3px 10px}
+.doc-bar .btns{display:flex;gap:8px}
+.mode{display:flex;background:var(--paper-2);border:1px solid var(--paper-line);border-radius:9px;padding:3px;gap:3px}
+.mode button{font-family:inherit;font-size:12px;font-weight:700;border:none;background:transparent;color:#6B6558;padding:6px 11px;border-radius:7px;cursor:pointer;transition:.15s}
+.mode button.on{background:var(--ground);color:#fff}
+.copy,.dl{font-family:inherit;font-weight:700;font-size:13px;border:none;border-radius:8px;padding:9px 15px;cursor:pointer;transition:.18s}
+.copy{background:var(--ground);color:#fff}
+.copy:hover{background:var(--ground-3)}
+.copy.done{background:var(--route-dim)}
+.dl{background:transparent;color:var(--ground);border:1.5px solid var(--ground)}
+.dl:hover{background:var(--paper-2)}
+.doc{flex:1;padding:26px 30px 60px;font-family:'Gowun Dodum',serif;font-size:13.5px;line-height:1.9;white-space:pre-wrap;word-break:break-word;max-width:780px}
+.doc .h1{font-family:'Gothic A1',sans-serif;font-size:19px;font-weight:800;letter-spacing:-.02em}
+.doc .h2{font-family:'Gothic A1',sans-serif;font-size:14.5px;font-weight:700;margin-top:6px}
+.doc .rule{color:#CFC7B4}
+.doc .ph{color:#AFA898;font-style:italic}
+.doc .li::before{content:"— ";color:var(--route-dim);font-weight:700}
+.doc .neg::before{content:"✕ ";color:var(--stamp-dim);font-weight:700}
+.doc .tag{display:inline-block;background:var(--paper-2);border:1px solid var(--paper-line);border-radius:5px;padding:1px 8px;margin:0 5px 4px 0;font-size:12px;color:#4C4739;font-family:'Pretendard Variable',Pretendard,sans-serif}
+.doc .swatch{display:inline-flex;align-items:center;gap:5px;background:var(--paper-2);border:1px solid var(--paper-line);border-radius:5px;padding:2px 8px;margin:0 5px 4px 0;font-family:'Space Mono',monospace;font-size:11px;color:#4C4739}
+.doc .swatch i{width:11px;height:11px;border-radius:3px;display:block;border:1px solid rgba(0,0,0,.15)}
+.doc .gate{background:#F1E6D4;border:1px dashed var(--route-dim);border-radius:8px;padding:9px 12px;margin:7px 0;color:#3D5B56;font-size:12.5px;line-height:1.7}
+.doc .lockbox{background:#F6E3D9;border:1px solid var(--stamp-dim);border-radius:8px;padding:9px 12px;margin:7px 0;color:#7A3D22;font-size:12.5px;line-height:1.7}
+.doc .code{background:#EDE6D6;border:1px solid var(--paper-line);border-radius:8px;padding:11px 13px;margin:7px 0;font-family:'Space Mono',monospace;font-size:11.5px;line-height:1.65;color:#3D3A32;overflow-x:auto;white-space:pre}
+.doc-note{padding:0 30px 34px;font-size:12.5px;color:#6B6558;line-height:1.75;max-width:780px}
+.doc-note b{color:var(--doc-ink)}
+
+.extras{margin:10px 24px 26px;border:1px dashed var(--line);border-radius:12px;padding:12px 14px 14px}
+.extras-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.etab{font-family:inherit;font-size:12.5px;font-weight:600;color:#B3C7D0;background:var(--ground-2);border:1px solid var(--line-soft);border-radius:8px;padding:7px 12px;cursor:pointer;transition:.15s}
+.etab:hover{border-color:var(--route)}
+.etab.on{background:var(--route);border-color:var(--route);color:#0E1F26}
+.epanel{display:none;font-size:13px;color:#B3C7D0;line-height:1.9;padding:13px 4px 2px;border-top:1px dashed var(--line);margin-top:11px}
+.epanel.on{display:block}
+.epanel b{color:var(--route)}
+.cmp{width:100%;border-collapse:collapse;font-size:12.5px}
+.cmp th,.cmp td{border:1px solid var(--line-soft);padding:7px 9px;text-align:left;vertical-align:top;line-height:1.5}
+.cmp th{background:var(--ground-3);color:#A7DDD4;font-weight:700}
+.cmp td:first-child{color:var(--txt-2);font-weight:600;white-space:nowrap}
+.cmp td b{color:var(--route)}
+.four{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:9px}
+@media(max-width:640px){.four{grid-template-columns:1fr 1fr}}
+.four div{background:var(--ground-2);border:1px solid var(--line-soft);border-radius:9px;padding:10px;font-size:12px;line-height:1.6;color:#B3C7D0}
+.four div b{display:block;color:var(--route);font-family:'Gothic A1',sans-serif;font-size:13px;margin-bottom:3px}
+footer{padding:16px 24px 28px;border-top:1px solid var(--line);font-size:12px;color:var(--txt-3);line-height:1.7}
+footer b{color:var(--txt-2)}
+@media(max-width:980px){
+  .panel{border-right:none;padding:18px 13px 30px}
+  .route{padding-left:28px}
+  .step .dot{left:-27px}
+  header{padding:20px 16px 14px}
+  .metro{min-width:0;width:100%}
+  .doc-bar{padding:11px 16px}
+  .doc{padding:20px 16px 50px}
+  .doc-note{padding:0 16px 26px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>가이드앱 <em>빌더</em></h1>
+    <p>현장에서 손에 쥐고 쓰는 <b>안내 앱</b>을 만들기 전에, 사람이 먼저 구조와 겉모습을 정하는 연습장입니다. 여섯 개 역을 지나면 붙여넣을 프롬프트가 완성돼요. 오른쪽 위에서 <b>승인 게이트를 켜면</b> 단계마다 확인받는 하네스 문서로 바뀝니다.</p>
+  </div>
+  <div class="metro">
+    <div class="metro-top"><span>BUILD LINE</span><b id="pct">0%</b></div>
+    <div class="stations" id="stations"></div>
+    <div class="metro-hint" id="hint">1번 역부터 순서대로 채워 보세요.</div>
+  </div>
+</header>
+
+<div class="wrap">
+<section class="panel">
+<div class="route">
+  <div class="rfill" id="rfill"></div>
+
+  <div class="step" id="st1">
+    <div class="dot">1</div>
+    <div class="step-h"><div class="t">무엇을 안내하나</div><div class="d">이 앱을 누가, 언제, 어떤 손 상태로 여는지부터 정합니다</div></div>
+    <div class="step-b">
+      <div class="group"><div class="glabel"><span class="gname">상황</span><span class="gtype">1개 선택</span></div>
+        <div class="presets" id="presets"></div></div>
+      <div class="util">
+        <button class="chip" id="sampleBtn" style="border-color:var(--route);color:#A9D6CF">✨ 예시로 구경하기</button>
+        <button class="chip" id="clearBtn">↺ 전체 지우기</button>
+        <button class="chip" id="exportBtn">💾 설정 저장(.json)</button>
+        <button class="chip" id="importBtn">📂 불러오기</button>
+        <input type="file" id="importFile" accept=".json,application/json" style="display:none">
+      </div>
+      <div class="field"><label><span class="name">앱 이름</span></label>
+        <input type="text" id="f_title" placeholder="예: 2학년 수학여행 안내"></div>
+      <div class="field"><label><span class="name">이 앱이 하는 일 한 줄</span></label>
+        <input type="text" id="f_purpose" placeholder="예: 학생이 지금 어디로 가야 하는지 3초 안에 알게 하기"></div>
+      <div class="group"><div class="glabel"><span class="gname">누가 씁니까</span><span class="gtype">복수 선택</span></div>
+        <div class="chips" id="useChips"></div></div>
+      <div class="group"><div class="glabel"><span class="gname">어떤 상황에서</span><span class="gtype">복수 선택</span></div>
+        <div class="chips" id="whenChips"></div></div>
+      <div class="field" style="margin-bottom:2px"><label><span class="name">📌 가장 급할 때 필요한 정보 하나</span></label>
+        <input type="text" id="f_pin" placeholder="예: 숙소 주소 / 인솔교사 번호 — 화면 맨 위 고정 버튼으로 뺍니다">
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="st2">
+    <div class="dot">2</div>
+    <div class="step-h"><div class="t">네 칸과 겉모습</div><div class="d">화면은 넷이면 충분합니다. 색과 글꼴까지 여기서 정해요</div></div>
+    <div class="step-b">
+      <div class="quad">
+        <div class="qcell"><label>① 진행 · 순서가 있는 것</label><input type="text" id="f_tprog"></div>
+        <div class="qcell"><label>② 점검 · 체크하면 쌓이는 것</label><input type="text" id="f_tcheck"></div>
+        <div class="qcell"><label>③ 참조 · 변하지 않는 사실</label><input type="text" id="f_tref"></div>
+        <div class="qcell"><label>④ 도구 · 그때만 필요한 것</label><input type="text" id="f_ttool"></div>
+      </div>
+      <div style="margin:9px 0 15px;font-size:11.5px;color:var(--txt-3);line-height:1.65">상황을 고르면 기본 이름이 채워집니다. 우리 학교 말로 바꿔 주세요 — 학생이 알아듣는 단어가 정답입니다.</div>
+
+      <div class="tip">색은 <b>"깔끔하게"가 아니라 색상값으로</b> 넘겨야 합니다. 아래에서 고른 값이 그대로 프롬프트에 박혀요. 학교 상징색이 있으면 직접 넣으셔도 됩니다.</div>
+
+      <div class="group"><div class="glabel"><span class="gname">🎨 색 고르기</span><code class="term">primary / accent</code><span class="gtype">1개 선택 후 다듬기</span></div>
+        <div class="chips" id="themeChips"></div>
+        <div class="picker">
+          <div><input type="color" id="c_primary"><span>기본색 <code id="hex_primary"></code></span></div>
+          <div><input type="color" id="c_accent"><span>강조색 <code id="hex_accent"></code></span></div>
+        </div>
+        <div class="preview" id="preview">
+          <div class="pv-bar" id="pv_bar"><span>🚨 급할 때 정보</span><span id="pv_btn">📞 연락</span></div>
+          <div class="pv-body" id="pv_body">
+            <div class="pv-pills" id="pv_pills"></div>
+            <div class="pv-card" id="pv_card"><b id="pv_time">09:00</b><small>학교 → 목적지 · 대절버스 2대</small></div>
+            <div class="pv-prog" id="pv_prog"><i></i></div>
+          </div>
+        </div>
+        <button class="pv-replay" id="replayBtn">▶ 움직임 다시 보기</button>
+        <div class="pv-cap">강조색은 지금 진행 중인 항목과 급한 정보에만 씁니다. 넓은 면적에 쓰면 눈이 아파요.</div>
+      </div>
+
+      <div class="group"><div class="glabel"><span class="gname">글꼴</span><code class="term">font-family</code><span class="gtype">1개 선택</span></div>
+        <div class="chips" id="fontChips"></div></div>
+      <div class="group"><div class="glabel"><span class="gname">모서리</span><code class="term">border-radius</code><span class="gtype">1개 선택</span></div>
+        <div class="chips" id="radiusChips"></div></div>
+      <div class="group"><div class="glabel"><span class="gname">여백</span><code class="term">padding</code><span class="gtype">1개 선택</span></div>
+        <div class="chips" id="densityChips"></div></div>
+
+      <div class="group"><div class="glabel"><span class="gname">그림자</span><code class="term">box-shadow</code><span class="gtype">1개 선택</span></div>
+        <div class="chips" id="shadowChips"></div></div>
+
+      <div class="tip">🎬 <b>움직임</b>도 골라서 넘길 수 있어요. 칩에 적힌 영어가 실제 코드에서 쓰는 말입니다 — 눌러보면서 눈에 익혀 두시면, 나중에 "여기 <b>transition</b> 좀 넣어줘"처럼 말할 수 있게 돼요.</div>
+      <div class="group"><div class="glabel"><span class="gname">🎬 움직임</span><span class="gtype" id="animCnt"></span></div>
+        <div class="foldbar" id="animBar"></div>
+        <div id="animFolds"></div></div>
+
+      <div class="field" style="margin-bottom:2px"><label><span class="name">🔗 기존 앱과 같은 스타일로</span><span class="opt">(선택)</span></label>
+        <textarea id="f_style" placeholder="이미 만든 앱의 :root 색상 변수나 style 블록을 붙여넣으면, 그 스타일을 그대로 따르라고 지시합니다. 앱을 여러 개 만들 때 인상을 맞추는 용도예요."></textarea></div>
+    </div>
+  </div>
+
+  <div class="step" id="st3">
+    <div class="dot">3</div>
+    <div class="step-h"><div class="t">현장에서 걱정되는 지점</div><div class="d">어디서 사고가 나는지 아는 사람은 선생님뿐입니다</div></div>
+    <div class="step-b">
+      <div class="group" style="margin-bottom:0"><div class="glabel"><span class="gname" id="riskQ">무엇이 걱정되나요?</span><span class="gtype">복수 선택</span></div>
+        <div class="chips" id="riskChips"></div>
+        <div class="riskmap" id="riskMap"></div></div>
+    </div>
+  </div>
+
+  <div class="step" id="st4">
+    <div class="dot">4</div>
+    <div class="step-h"><div class="t">담을 내용과 화면 부품</div><div class="d">무엇이 들어가는지, 어떤 부품으로 보일지 정합니다</div></div>
+    <div class="step-b">
+      <div class="group"><div class="glabel"><span class="gname">① 진행을 나누는 단위</span><span class="gtype">1개 선택</span></div>
+        <div class="chips" id="unitChips"></div></div>
+      <div class="group"><div class="glabel"><span class="gname">몇 구간인가요</span><span class="gtype">1개 선택</span></div>
+        <div class="chips" id="segChips"></div></div>
+      <div class="tip">아래 <b>화면 부품</b>은 기본으로 다 켜져 있습니다. 이걸 적어두지 않으면 밋밋한 기본 화면이 나와요. 필요 없는 것만 끄시면 됩니다.</div>
+      <div class="group"><div class="glabel"><span class="gname">🧱 넣을 화면 부품</span><span class="gtype" id="partsCnt"></span></div>
+        <div class="foldbar" id="partsBar"></div>
+        <div id="partsFolds"></div></div>
+      <div class="group"><div class="glabel"><span class="gname">② 점검 목록의 분류</span><span class="gtype">복수 선택</span></div>
+        <div class="chips" id="checkChips"></div>
+        <input type="text" id="add_check" placeholder="직접 쓰고 Enter를 누르면 추가돼요" style="margin-top:7px"></div>
+      <div class="group"><div class="glabel"><span class="gname">③ 참조 화면에 둘 것</span><span class="gtype">복수 선택</span></div>
+        <div class="chips" id="refChips"></div>
+        <input type="text" id="add_ref" placeholder="직접 쓰고 Enter를 누르면 추가돼요" style="margin-top:7px"></div>
+      <div class="group" style="margin-bottom:2px"><div class="glabel"><span class="gname">④ 도구 화면에 둘 것</span><span class="gtype">복수 선택</span></div>
+        <div class="chips" id="toolChips"></div></div>
+    </div>
+  </div>
+
+  <div class="step guard" id="st5">
+    <div class="dot">5</div>
+    <div class="step-h"><div class="t">🔒 지어내지 않기</div><div class="d">이 앱에서 가장 중요한 규칙입니다</div></div>
+    <div class="step-b">
+      <div class="why">안내 앱은 <b>틀린 정보가 하나만 있어도 앱 전체를 못 믿게 됩니다.</b> 아래 항목은 "내가 준 값이 아니면 비워두고 물어보기"로 잠급니다. 대신 <b>무엇을 모아 와야 하는지 목록을 먼저 받는</b> 요구가 자동으로 들어가니, 껍데기만 나오지는 않아요.</div>
+      <div class="group"><div class="glabel"><span class="gname">잠글 항목</span><span class="gtype">필요 없는 건 끄기</span></div>
+        <div class="toggles" id="tg_locks"></div>
+        <input type="text" id="add_locks" placeholder="직접 쓰고 Enter를 누르면 추가돼요" style="margin-top:7px"></div>
+      <div class="group" style="margin-bottom:2px"><div class="glabel"><span class="gname">어디에 쓸 파일인가요</span><span class="gtype">1개 선택</span></div>
+        <div class="chips" id="deployChips"></div>
+        <div style="margin-top:8px;font-size:11.5px;color:var(--txt-3);line-height:1.65">체크 상태를 새로고침 뒤에도 남기려면 브라우저 저장이 필요해요. 대화형 미리보기 안에서는 그 기능이 막혀 있어서 화면이 아예 안 뜨는 일이 생깁니다.</div></div>
+    </div>
+  </div>
+
+  <div class="step" id="st6">
+    <div class="dot">6</div>
+    <div class="step-h"><div class="t">넘겨받기 전에 확인할 것</div><div class="d">무엇을 검사할지 정하는 사람도 선생님입니다</div></div>
+    <div class="step-b">
+      <div class="group"><div class="glabel"><span class="gname">✅ 점검표</span><span class="gtype">필요 없는 건 끄기</span></div>
+        <details class="fold"><summary><span><span class="arw">▶</span> 점검 항목 펼치기</span><span class="cnt" id="checksCnt">0 / 0</span></summary>
+          <div class="foldbody"><div class="toggles" id="tg_checks"></div></div>
+        </details>
+        <input type="text" id="add_checks" placeholder="직접 쓰고 Enter를 누르면 추가돼요" style="margin-top:7px"></div>
+      <div class="group"><div class="glabel"><span class="gname">검증 방식</span><span class="gtype">1개 선택</span></div>
+        <div class="chips" id="verifyChips"></div></div>
+      <div class="field" style="margin-bottom:2px"><label><span class="name">✍️ 내 실제 내용 붙이기</span><span class="opt">(선택 · 강력 추천)</span></label>
+        <textarea id="f_content" placeholder="표를 그대로 붙여넣어도 되고, 줄글로 써도 됩니다.&#10;예)&#10;1일차&#10;09:00 | 이동 | 학교 → 경주 | 대절버스 2대 | 담임 인솔&#10;11:30 | 관람 | 불국사 | 조별 자유 관람, 12:40 정문 집합"></textarea></div>
+    </div>
+  </div>
+
+</div>
+
+  <div class="extras">
+    <div class="extras-tabs" id="extraTabs">
+      <button class="etab" data-p="four">📐 왜 네 칸인가</button>
+      <button class="etab" data-p="color">🎨 색을 왜 값으로 주나</button>
+      <button class="etab" data-p="term">🧑‍💻 클릭하며 배우는 용어</button>
+      <button class="etab" data-p="gate">🚦 게이트는 언제 켜나</button>
+      <button class="etab" data-p="grad">🎓 앱 없이 하기</button>
+      <button class="etab" data-p="try">🔬 직접 비교하기</button>
+    </div>
+    <div class="epanel" data-p="four">
+      현장 안내 앱은 주제가 무엇이든 네 가지 정보로 나뉩니다. 이 넷으로 갈라놓으면 내용이 늘어도 화면이 무너지지 않아요.
+      <div class="four">
+        <div><b>① 진행</b>시간에 따라 변하는 것. 일차·차시·시간대</div>
+        <div><b>② 점검</b>체크하면 쌓이는 것. 준비물·제출물</div>
+        <div><b>③ 참조</b>변하지 않는 사실. 주소·연락처·번호</div>
+        <div><b>④ 도구</b>그 상황에만 필요한 것. 계산기·타이머·지도</div>
+      </div>
+    </div>
+    <div class="epanel" data-p="color">
+      "예쁘게", "깔끔하게", "세련되게"는 AI에게 아무 정보도 주지 못합니다. 사람마다 뜻이 다르니까요. 그래서 <b>같은 말을 해도 매번 다른 결과</b>가 나옵니다.
+      <table class="cmp" style="margin-top:9px"><thead><tr><th>안 통하는 말</th><th>통하는 말</th></tr></thead><tbody>
+        <tr><td>깔끔하게 만들어줘</td><td>기본색 <b>#2563EB</b>, 강조색 <b>#EF4444</b>, 배경 <b>#F8FAFC</b></td></tr>
+        <tr><td>글씨 예쁘게</td><td>Noto Sans KR을 구글 폰트로 불러오기</td></tr>
+        <tr><td>부드러운 느낌으로</td><td>카드 모서리 16px, 버튼은 알약 모양</td></tr>
+        <tr><td>답답하지 않게</td><td>카드 안쪽 여백 16px 이상</td></tr>
+      </tbody></table>
+      <div style="margin-top:9px">디자인 감각이 없어도 괜찮습니다. <b>값으로 옮기기만 하면</b> 됩니다. 위에서 고른 색은 실제 색상값으로 프롬프트에 들어가요.</div>
+    </div>
+    <div class="epanel" data-p="term">
+      칩에 붙은 영어가 실제 코드에서 쓰는 이름입니다. 외울 필요는 없고 <b>눌러보면서 눈에 익히면</b> 충분해요. 이 말을 알면 AI에게 "여기 <b>padding</b> 좀 늘려줘"처럼 정확히 짚을 수 있게 됩니다.
+      <table class="cmp" style="margin-top:9px"><thead><tr><th>우리말</th><th>코드에서 쓰는 말</th><th>무슨 뜻</th></tr></thead><tbody>
+        <tr><td>기본색·강조색</td><td><b>primary / accent</b></td><td>앱을 이끄는 색과 눈길을 끄는 색</td></tr>
+        <tr><td>틴트</td><td><b>tint</b></td><td>기본색을 아주 옅게 푼 배경색</td></tr>
+        <tr><td>모서리</td><td><b>border-radius</b></td><td>네모의 모서리를 얼마나 둥글릴지</td></tr>
+        <tr><td>안쪽 여백</td><td><b>padding</b></td><td>상자 안쪽 여백. 바깥쪽은 margin</td></tr>
+        <tr><td>그림자</td><td><b>box-shadow</b></td><td>카드가 떠 있어 보이게 하는 그늘</td></tr>
+        <tr><td>부드러운 전환</td><td><b>transition</b></td><td>값이 바뀔 때 뚝 바뀌지 않고 서서히</td></tr>
+        <tr><td>눌림 효과</td><td><b>active:scale</b></td><td>누르는 동안 잠깐 작아지기</td></tr>
+        <tr><td>직접 만든 움직임</td><td><b>@keyframes</b></td><td>시작과 끝을 정해 움직임을 그리기</td></tr>
+        <tr><td>움직임 줄이기</td><td><b>prefers-reduced-motion</b></td><td>어지럼을 느끼는 사람에게는 꺼주기</td></tr>
+        <tr><td>화면폭 접두사</td><td><b>md: / lg:</b></td><td>창 크기에 따라 다르게. 이 앱에선 안 씀</td></tr>
+      </tbody></table>
+    </div>
+    <div class="epanel" data-p="gate">
+      승인 게이트는 <b>단계마다 멈추고 사람 확인을 받는 장치</b>입니다. 늘 켜는 게 좋은 건 아니에요. 되돌리는 비용이 쌀 때는 그냥 한 번에 뽑고 다시 뽑는 게 빠릅니다.
+      <table class="cmp" style="margin-top:9px"><thead><tr><th>이럴 땐 끄기</th><th>이럴 땐 켜기</th></tr></thead><tbody>
+        <tr><td>만들 것이 이미 또렷할 때</td><td>무엇을 만들지 아직 흐릿할 때</td></tr>
+        <tr><td>틀리면 다시 뽑으면 되는 것</td><td>되돌리는 비용이 클 때</td></tr>
+        <tr><td>나 혼자 쓸 것</td><td>학생·학부모에게 그대로 나갈 것</td></tr>
+        <tr><td>짧은 결과물</td><td>여러 사람 손을 거치는 결과물</td></tr>
+      </tbody></table>
+      <div style="margin-top:9px">안내 앱은 대체로 <b>끄는 쪽</b>입니다. 연수에서는 같은 내용으로 켜고 한 번, 끄고 한 번 돌려보시면 차이가 바로 보입니다.</div>
+    </div>
+    <div class="epanel" data-p="grad">
+      이 앱이 한 일은 여섯 가지 질문을 대신 물어본 것뿐이에요.<br>
+      <b>①</b> 누가 언제 어떤 손 상태로 여나 <b>②</b> 화면을 어떤 네 칸으로 나누고 어떤 색으로 입힐까 <b>③</b> 현장에서 무엇이 걱정되나
+      <b>④</b> 무엇을 담고 어떤 부품을 쓸까 <b>⑤</b> AI가 절대 지어내면 안 되는 값은 무엇인가 <b>⑥</b> 넘겨받기 전에 무엇을 확인할까<br>
+      이 여섯을 답할 수 있으면, 이 도구는 더 필요 없습니다.
+    </div>
+    <div class="epanel" data-p="try">
+      백문이 불여일견이에요. 같은 주제로 두 번 시켜보고 나란히 놓아 보세요.<br><br>
+      <b>1)</b> 새 대화에 그냥 "○○ 안내 앱 만들어줘"라고만 해보기<br>
+      <b>2)</b> 다른 대화에 이 프롬프트를 붙여넣기<br>
+      <b>3)</b> 두 결과에서 <b>주소와 시각</b>, 그리고 <b>색과 부품</b>이 어떻게 다른지 확인하기<br><br>
+      1번 결과에는 존재하지 않는 주소가 들어 있고, 화면은 밋밋할 가능성이 높습니다.<br><br>
+      한 가지 미리 아셔야 할 것 — 프롬프트가 해주는 건 <b>잘 짜인 80%까지</b>입니다. 지도 링크를 모으고 시각을 확인하고 두세 번 고치는 일은 남습니다. 그건 도구의 한계가 아니라 원래 사람 몫이에요.
+    </div>
+  </div>
+
+</section>
+
+<section class="doc-side">
+  <div class="doc-bar">
+    <div class="fname">📄 <b id="fname">GUIDE-APP.md</b></div>
+    <div class="mode">
+      <button id="modeOff" class="on">한 장 프롬프트</button>
+      <button id="modeOn">승인 게이트 포함</button>
+    </div>
+    <span class="count" id="stepCount">0 / 6 역</span>
+    <div class="btns">
+      <button class="dl" id="dlBtn">⬇ 저장</button>
+      <button class="copy" id="copyBtn">⧉ 전체 복사</button>
+    </div>
+  </div>
+  <div class="doc" id="doc"></div>
+  <div class="doc-note" id="docNote"></div>
+</section>
+</div>
+
+<button id="peekBtn" aria-label="문서 미리보기 열기">📄 미리보기</button>
+<footer><b>가이드앱 프롬프트</b> = 무엇을 만들지 + 어떤 모양으로 + <b>무엇을 지어내지 말지</b>. 승인 게이트는 필요할 때만 얹는 장치입니다. 이 도구의 목표는 선생님이 이 도구 없이도 여섯 질문을 던지게 되는 것입니다.</footer>
+
+<script>
+/* ══════════ 데이터 ══════════ */
+const USE=["학생 각자의 휴대폰","인솔·담당 교사","학부모","참가자 본인","나 혼자"];
+const WHEN=["이동 중 한 손으로","출발 전날 밤 준비하며","행사 당일 현장에서","수업 시간에","급한 상황에서"];
+const UNITS=["일차","차시","시간대","주차","코스"];
+const SEGS=["1구간","2구간","3구간","4구간","5구간","6구간","7구간"];
+
+const THEMES=[
+ {label:"차분한 남색",p:"#2563EB",a:"#EF4444",bg:"#F8FAFC",tint:"#EFF6FF"},
+ {label:"학교 초록",p:"#15803D",a:"#F59E0B",bg:"#F7FAF7",tint:"#F0FDF4"},
+ {label:"따뜻한 주황",p:"#EA580C",a:"#0EA5E9",bg:"#FFFBF7",tint:"#FFF7ED"},
+ {label:"고대비 먹색",p:"#1F2937",a:"#DC2626",bg:"#FFFFFF",tint:"#F3F4F6"},
+ {label:"부드러운 자주",p:"#7C3AED",a:"#F43F5E",bg:"#FBFAFF",tint:"#F5F3FF"},
+ {label:"바다 청록",p:"#0D9488",a:"#F97316",bg:"#F7FBFA",tint:"#F0FDFA"}
+];
+const FONTS=[
+ {label:"Noto Sans KR",text:"Noto Sans KR을 구글 폰트 CDN으로 불러와 본문 글꼴로 써 주세요. 가장 무난하고 어느 기기에서나 잘 보입니다"},
+ {label:"Pretendard",text:"Pretendard를 CDN으로 불러와 본문 글꼴로 써 주세요. 또렷하고 현대적인 인상입니다"},
+ {label:"고운돋움",text:"Gowun Dodum을 구글 폰트 CDN으로 불러와 본문 글꼴로 써 주세요. 부드럽고 따뜻한 인상입니다"},
+ {label:"시스템 기본",text:"별도 웹폰트를 불러오지 말고 기기 기본 글꼴을 써 주세요. 로딩이 가장 빠릅니다"}
+];
+const RADIUS=[
+ {label:"둥글게",text:"카드 모서리는 16px, 버튼은 알약 모양(완전히 둥글게)으로 해 주세요"},
+ {label:"살짝",text:"카드와 버튼 모서리를 8px로 해 주세요"},
+ {label:"각지게",text:"모서리는 4px 이하로 거의 각지게 해 주세요"}
+];
+const DENSITY=[
+ {label:"넉넉하게",text:"카드 안쪽 여백은 16px 이상, 항목 사이는 12px 이상으로 넉넉하게 잡아 주세요"},
+ {label:"촘촘하게",text:"카드 안쪽 여백은 10px 안팎으로 잡아 한 화면에 더 많이 보이게 해 주세요"}
+];
+
+const SHADOW=[
+ {label:"없음",code:"box-shadow: none",text:"카드에 그림자를 넣지 말고 옅은 테두리로만 구분해 주세요"},
+ {label:"옅게",code:"0 1px 3px",text:"카드에 아주 옅은 그림자를 넣어 주세요"},
+ {label:"뚜렷하게",code:"0 4px 12px",text:"카드에 또렷한 그림자를 넣어 살짝 떠 있어 보이게 해 주세요"}
+];
+const ANIM=[
+ ["버튼 눌림","active:scale-95","버튼을 누르는 동안 살짝 작아졌다 돌아오게 해 주세요"],
+ ["부드러운 전환","transition .2s","색이나 크기가 바뀔 때 뚝 바뀌지 말고 0.2초에 걸쳐 부드럽게 변하게 해 주세요"],
+ ["화면 나타남","fade-in","탭을 바꾸면 내용이 서서히 나타나게 해 주세요"],
+ ["아래에서 올라오기","slide-up","하단 시트를 화면 아래에서 올라오게 해 주세요"],
+ ["진행률 차오름","width transition","진행률 막대가 뚝 늘지 말고 부드럽게 차오르게 해 주세요"],
+ ["알림 떴다 사라짐","toast fade","복사 알림이 스르르 떴다가 2초 뒤 사라지게 해 주세요"],
+ ["중요 항목 흔들림","shake","중요 표시가 붙은 항목을 처음 볼 때 살짝 흔들어 눈길을 끌어 주세요"],
+ ["움직임 줄이기 존중","prefers-reduced-motion","기기에서 '움직임 줄이기'를 켠 사람에게는 모든 애니메이션을 꺼 주세요. 어지럼을 느끼는 사람을 위한 배려입니다"]
+];
+const PARTS=[
+ ["상단 고정 바","화면 맨 위에 늘 보이는 줄을 두고, 가장 급할 때 필요한 정보를 버튼으로 넣어 주세요"],
+ ["구간 선택 알약 버튼","구간을 고르는 둥근 버튼을 가로로 늘어놓고, 넘치면 가로 스크롤되게 해 주세요(스크롤바는 숨김)"],
+ ["대표 카드","각 구간 맨 위에 기본색 그라데이션 카드를 두고, 그 구간의 핵심 한 줄과 대표 시각을 크게 보여 주세요"],
+ ["빠른 링크 칩","자주 누를 장소·링크를 작은 알약 모양으로 가로 스크롤 줄에 놓아 주세요"],
+ ["세로 연결선 타임라인","항목들을 세로로 잇는 선을 왼쪽에 그리고, 각 항목 옆에 번호가 든 원형 배지를 놓아 주세요"],
+ ["항목 카드","한 항목은 시각 배지 · 분류 라벨 · 제목 · 세부 불릿 순으로 담아 주세요"],
+ ["지도 버튼","지도 링크가 있는 항목에만 지도 버튼을 붙여 주세요. 링크가 없으면 버튼을 그리지 말아 주세요"],
+ ["웹 링크 버튼","웹 주소가 있는 항목에만 링크 버튼을 붙여 주세요"],
+ ["강조 카드","중요한 항목은 테두리와 배경색을 다르게 해서 눈에 띄게 해 주세요"],
+ ["메모 입력칸","사용자가 직접 적을 수 있는 작은 입력칸을 필요한 항목에 넣어 주세요"],
+ ["진행률 막대","점검 화면 맨 위에 완료율 막대와 '몇 개 중 몇 개'를 보여 주세요"],
+ ["복사 버튼 + 알림","주소·연락처 옆에 복사 버튼을 두고, 누르면 화면 아래에 2초짜리 알림이 뜨게 해 주세요"],
+ ["하단 시트 모달","주소나 연락처를 크게 띄우는 창을 아래에서 올라오게 만들고, 배경을 눌러도 닫히게 해 주세요"],
+ ["지도 미리보기(임베드)","지도 주소가 있는 항목에는 카드 안에 구글 지도를 바로 띄워 주세요. 반드시 주소 문자열 방식(https://maps.google.com/maps?q=주소&output=embed)만 쓰고, 주소가 없으면 임베드를 그리지 말아 주세요"],
+ ["미확인 회색 배지","값이 없어 버튼을 못 그릴 때는 자리를 비우지 말고 '지도 미확인'처럼 회색 배지를 남겨 주세요. 무엇이 비었는지 보여야 채울 수 있습니다"],
+ ["중요 표시 리본","중요한 항목 카드 위쪽에 작은 리본 배지를 붙여 한눈에 띄게 해 주세요"],
+ ["아이콘 세트","Font Awesome을 CDN으로 불러와 분류와 버튼에 아이콘을 붙여 주세요"]
+];
+
+const PART_GROUPS=[
+ ["화면 뼈대",["상단 고정 바","구간 선택 알약 버튼","대표 카드","빠른 링크 칩","세로 연결선 타임라인"]],
+ ["항목 카드 안",["항목 카드","지도 버튼","웹 링크 버튼","지도 미리보기(임베드)","미확인 회색 배지","강조 카드","중요 표시 리본","메모 입력칸"]],
+ ["편의 기능",["진행률 막대","복사 버튼 + 알림","하단 시트 모달","아이콘 세트"]]
+];
+const DEPLOY=[
+ {label:"웹에 올려 쓸 파일",text:"파일로 저장해 웹에 올리거나 직접 열어 쓸 예정입니다. 체크 상태와 메모는 브라우저 저장(localStorage)에 남기되, 저장이 막힌 환경에서도 화면은 뜨도록 try/catch로 감싸 주세요. 저장 키 앞에는 앱 이름을 붙여 다른 앱과 섞이지 않게 해 주세요."},
+ {label:"대화형 미리보기용",text:"대화형 미리보기 화면 안에서 볼 예정입니다. 브라우저 저장(localStorage)을 쓰면 화면이 아예 뜨지 않으니, 상태는 변수에만 담아 주세요."}
+];
+const VERIFY=[
+ {label:"점검표 O/X 채점",text:"점검표를 하나씩 O/X로 채점해 보여주고, X가 나온 항목은 어떻게 고칠지 함께 알려주세요"},
+ {label:"쓸 사람 되어 따라가기",text:"이 앱을 실제로 쓸 사람이 되어 첫 화면부터 끝까지 따라가 보고, 손이 멈추는 지점을 짚어 주세요"},
+ {label:"화면별로 설명하기",text:"네 화면이 각각 어떻게 보이는지 항목별로 설명한 뒤, 빠진 정보가 없는지 확인해 주세요"}
+];
+
+const PRESETS={
+"수학여행·현장체험":{
+ tabs:["일정표","준비물","안전·연락처","현장 도구"],unit:"일차",segs:"3구간",theme:"차분한 남색",
+ check:["개인 준비물","서류·동의서","조별 준비물"],
+ ref:["인솔 교사 연락처","조·버스 편성","숙소 주소","집합 장소와 시각"],
+ tools:["비상 연락처","안전 수칙","조별 명단"],
+ locks:["숙소·목적지 주소","인솔 교사 연락처","집합 시각","버스 번호","입장료·비용"],
+ riskQ:"현장에서 무엇이 걱정되나요?",
+ risks:{
+  "학생이 집합 시각을 놓침":"시각을 항목 카드 맨 위에 가장 큰 글씨로 두고, 이동 항목에는 여유 시간을 함께 적어 주세요",
+  "준비물을 빠뜨림":"점검 화면을 먼저 열리게 하고, 다 채우지 못했으면 상단에 남은 개수를 보여 주세요",
+  "길을 잃거나 흩어짐":"장소가 나오는 모든 항목에 지도 버튼을 붙이고, 집합 장소는 상단 고정 바로 빼 주세요",
+  "비상시 연락처를 못 찾음":"연락처는 탭 안쪽이 아니라 어느 화면에서든 한 번에 눌리는 자리에 두어 주세요",
+  "글이 많아 읽지 않음":"한 항목의 설명은 세 줄 안으로 줄이고, 나머지는 참조 화면으로 옮겨 주세요"}},
+"신입생 오리엔테이션":{
+ tabs:["오늘 순서","챙길 것","학교 안내","도움 받기"],unit:"시간대",segs:"1구간",theme:"따뜻한 주황",
+ check:["첫날 준비물","제출 서류"],
+ ref:["교실 위치","담임 선생님","급식·하교 안내","교내 지도"],
+ tools:["교내 지도","연락처","시간표"],
+ locks:["교실 위치·층","선생님 연락처","시작 시각","급식 시간","제출 마감일"],
+ riskQ:"신입생이 어디서 헤맬 것 같나요?",
+ risks:{
+  "어디로 가야 할지 모름":"장소마다 층과 교실 번호를 제목에 함께 적고 지도 버튼을 붙여 주세요",
+  "학교 용어를 못 알아들음":"낯선 말이 나오는 자리에 바로 짧은 풀이를 달아 주세요",
+  "무엇을 내야 할지 모름":"제출물을 마감일 순으로 놓고, 낸 것은 체크하면 지워지게 해 주세요",
+  "누구에게 물어야 할지 모름":"각 화면 아래에 '이건 누구에게 물어보나'를 한 줄로 적어 주세요"}},
+"학교 행사 운영":{
+ tabs:["진행 순서","점검 목록","담당·연락","운영 도구"],unit:"시간대",segs:"1구간",theme:"고대비 먹색",
+ check:["사전 준비","당일 물품","정리·마감"],
+ ref:["담당자별 역할","장소 배치도","물품 목록"],
+ tools:["연락처","타이머","방송 멘트","랜덤 뽑기"],
+ locks:["담당자 연락처","시작·종료 시각","장소","예산·금액","물품 수량"],
+ riskQ:"운영하면서 무엇이 걱정되나요?",
+ risks:{
+  "담당자끼리 진행 상황을 모름":"항목마다 담당 이름을 적고, 지금 진행 중인 항목을 눈에 띄게 표시해 주세요",
+  "물품을 빠뜨림":"점검 목록을 사전 준비·당일·정리 세 단계로 나눠 주세요",
+  "시간이 자꾸 밀림":"항목마다 예정 시각과 소요 시간을 함께 적어 주세요",
+  "돌발 상황 대응이 늦음":"연락처와 대응 절차를 참조 화면 맨 위에 두어 주세요"}},
+"캠프·연수":{
+ tabs:["연수 일정","준비물","장소·연락","연수 도구"],unit:"일차",segs:"2구간",theme:"바다 청록",
+ check:["사전 준비물","당일 지참물","제출물"],
+ ref:["강사 소개","장소 약도","숙소 정보","이수 기준"],
+ tools:["연락처","타이머","설문 링크","조 편성"],
+ locks:["장소 주소","강사 이름·소속","시각","이수 시간","참가비"],
+ riskQ:"참가자가 어디서 막힐 것 같나요?",
+ risks:{
+  "장소를 못 찾음":"약도와 지도 버튼을 첫 화면에 두어 주세요",
+  "무엇을 준비할지 모름":"사전에 준비할 것과 당일 가져올 것을 나눠 적어 주세요",
+  "일정이 자주 바뀜":"바뀔 수 있는 항목을 한곳에 모아 고치기 쉽게 두어 주세요",
+  "이수 기준을 모름":"이수 기준과 남은 시간을 참조 화면에 또렷하게 적어 주세요"}},
+"프로젝트 수업":{
+ tabs:["차시 흐름","제출물","참고 자료","수업 도구"],unit:"차시",segs:"4구간",theme:"학교 초록",
+ check:["차시별 준비물","제출 과제","모둠 역할"],
+ ref:["평가 기준","참고 링크","모둠 편성"],
+ tools:["타이머","랜덤 뽑기","평가표","자료 링크"],
+ locks:["제출 마감일","평가 배점","차시 일정","참고 자료 출처"],
+ riskQ:"학생이 어디서 막힐 것 같나요?",
+ risks:{
+  "지금 몇 차시인지 헷갈림":"차시 선택 버튼을 맨 위에 두고, 오늘 차시가 기본으로 열리게 해 주세요",
+  "제출 마감을 놓침":"제출물마다 마감일과 남은 날짜를 함께 보여 주세요",
+  "모둠 역할이 흐지부지됨":"모둠별 역할을 참조 화면에 적어두고 차시마다 다시 보이게 해 주세요",
+  "평가 기준을 모름":"평가 기준을 차시 화면에서 바로 열리도록 연결해 주세요"}},
+"개인 여행":{
+ tabs:["일정표","준비물","예약 정보","여행 도구"],unit:"일차",segs:"5구간",theme:"차분한 남색",
+ check:["필수 서류","전자기기","의류·잡화","상비약"],
+ ref:["항공권 정보","숙소 바우처","예약 번호"],
+ tools:["환율 계산기","현지 표현집","비상 연락처","지도 모음"],
+ locks:["숙소 주소","예약·좌석 번호","항공편·시각","요금·환율","영업시간"],
+ riskQ:"여행 중 무엇이 걱정되나요?",
+ risks:{
+  "이동 중에 정보를 못 찾음":"가장 급한 정보 하나를 상단 고정 바로 빼 주세요",
+  "현지에서 주소를 보여줘야 함":"현지어 주소를 복사 버튼과 함께 두어 주세요",
+  "예약 정보가 흩어져 있음":"예약 번호와 바우처를 참조 화면 한곳에 모아 주세요",
+  "환율 계산이 번거로움":"계산기를 도구 화면에 두되, 값을 넣고 되돌렸을 때 원래 값이 나오는지 꼭 확인해 주세요"}},
+"직접 입력":{
+ tabs:["진행","점검","참조","도구"],unit:"구간",segs:"3구간",theme:"차분한 남색",
+ check:["분류 1"],ref:["참조 1"],tools:["연락처"],
+ locks:["주소","전화번호","시각·소요 시간","요금·금액","예약·번호"],
+ riskQ:"이 앱에서 무엇이 걱정되나요?",
+ risks:{
+  "쓸 사람이 헤맬 것 같음":"첫 화면에서 지금 무엇을 해야 하는지 한 줄로 보여 주세요",
+  "정보가 흩어져 있음":"변하지 않는 정보와 시간에 따라 변하는 정보를 다른 화면으로 나눠 주세요",
+  "안 읽고 넘길 것 같음":"가장 중요한 것 하나만 크게 두고 나머지는 접어 주세요",
+  "현장에서 손이 바쁨":"자주 누르는 것을 엄지가 닿는 아래쪽에 두어 주세요"}}
+};
+const QUICK_LOCK=["주소","전화번호","시각·소요 시간","요금·금액","예약·좌석 번호","영업시간","인원·정원","지도 링크"];
+const BASE_CHECKS=[
+ "값이 없는 링크·전화번호 자리에 자리표시자를 넣지 않았는지 확인하기 (버튼 자체를 그리지 않기)",
+ "md:·lg: 같은 화면폭 접두사를 쓰지 않았는지 확인하기",
+ "지도에 쓴 주소·번호가 내가 준 값인지 확인하기 (cid 같은 숫자 ID는 쓰지 않기)",
+ "고른 글꼴·모서리·그림자가 화면에 실제로 적용됐는지 확인하기",
+ "움직임 줄이기를 켠 기기에서 애니메이션이 꺼지는지 확인하기",
+ "지정한 색상값을 그대로 썼는지, 뒤에 오는 클래스가 배경색을 덮지 않았는지 확인하기",
+ "숫자 계산이 들어갔다면 값을 넣고 되돌려 원래 값이 나오는지 확인하기",
+ "팝업·모달이 휴대폰 폭에서 화면 밖으로 밀려나지 않는지 확인하기",
+ "내가 주지 않은 주소·시각·요금을 지어내지 않았는지 확인하기",
+ "링크가 모두 새 탭으로 열리는지 확인하기",
+ "항목을 하나 더 넣을 때 데이터만 고치면 되는지 확인하기",
+ "날짜·요일·번호에 앞뒤가 안 맞는 곳이 없는지 확인하기"
+];
+const DATA_CONTRACT=
+'// ① 진행 데이터 — 구간별로 묶기\n'+
+'const timeline = {\n'+
+'  1: {\n'+
+'    subtitle: "화면 위 부제목",\n'+
+'    hero: { badge:"", time:"", title:"", sub1:"", sub2:"" },   // 이 구간의 대표 한 줄\n'+
+'    chips: [ { label:"", url:"" } ],                            // 자주 누를 링크\n'+
+'    schedules: [\n'+
+'      { stepNum:"1", time:"", type:"", title:"",\n'+
+'        details: [""],                                          // 세부 항목 배열\n'+
+'        mapUrl:"", mapEmbed:"", link:"",                          // 값이 없으면 버튼·지도를 그리지 않기\n'+
+'        highlight:false, memoInput:false }\n'+
+'    ]\n'+
+'  }\n'+
+'};\n\n'+
+'// ② 점검 목록\n'+
+'const checklist = [\n'+
+'  { category: "분류 이름", items: [ { id:"c1", label:"" } ] }\n'+
+'];';
+const STRUCT_RULES=[
+ "휴대폰 세로 화면 기준으로 만들고, 본문은 폭 한 칸(약 448px) 안에 넣어 주세요",
+ "화면폭 접두사(md:, lg: 등)를 쓰지 말아 주세요. 그 접두사는 브라우저 창 크기를 따라가서 PC에서 레이아웃이 깨집니다",
+ "높이는 100vh 대신 100dvh로 잡아 주세요. 휴대폰 주소창 때문에 아래가 잘립니다",
+ "버튼은 손가락으로 누를 수 있게 세로 여백을 넉넉히 주세요",
+ "빌드 도구 없이 파일 하나로 열리게 하고, 외부 라이브러리는 CDN 세 개 이하로 써 주세요"
+];
+const LINK_REQ="코드보다 먼저, 제가 모아 와야 할 값의 목록을 표로 뽑아 주세요. 열은 이렇게 잡아 주세요 — 어떤 항목인지 / 어떤 값이 필요한지(주소·지도 링크·시각·연락처) / 어디서 구하면 되는지(예: 구글 지도에서 해당 장소 검색 → 공유 → 링크 복사). 이 표를 먼저 보고 값을 모아 드리겠습니다.";
+const PLACEHOLDER_RULE="값이 없는 자리에 자리표시자를 넣을 때는 화면에 보이는 글자에만 써 주세요. href·tel·url 같은 속성 안에는 절대 넣지 말아 주세요. 링크 값이 없으면 그 버튼 자체를 그리지 말고, 대신 '주소 미확인' 같은 회색 글자만 남겨 주세요.";
+const MAP_RULE="지도 링크의 cid 같은 긴 숫자 ID는 절대 만들어 내지 말아 주세요. 그 번호는 구글 지도에서 직접 복사해야만 나오는 값이라, 지어내면 엉뚱한 장소로 이동합니다. 지도는 제가 드린 주소 문자열로만 만들어 주세요.";
+const GATE="⛔ [정지 지침] 한 단계를 마치면 거기서 멈추고, 제가 '승인'이라고 말하기 전에는 다음 단계로 넘어가지 말아 주세요. 각 단계 설명은 세 줄 안팎으로 짧게 부탁해요. 최종 결정은 언제나 제가 합니다.";
+const PROC=[
+ ["1. 이해 확인","무엇을 만들려는지 세 줄로 다시 말해 주시고, 제가 빠뜨린 정보가 있으면 알려 주세요."],
+ ["2. 값 목록","위 '먼저 해 주실 것'의 표를 뽑아 주세요. 코드는 아직 쓰지 않습니다."],
+ ["3. 데이터 확정","제가 값을 드리면, 데이터 구조에 끼워 넣은 데이터 부분만 보여 주세요."],
+ ["4. 제작과 자가검증","화면을 만들고, 점검표를 하나씩 확인한 결과를 표로 보여 주세요."]
+];
+
+/* ══════════ 상태 ══════════ */
+let preset="수학여행·현장체험";
+const S={use:new Set(),when:new Set(),risks:new Set(),
+ unit:null,segs:null,gate:false,
+ theme:"차분한 남색",primary:"#2563EB",accent:"#EF4444",bg:"#F8FAFC",tint:"#EFF6FF",
+ font:"Noto Sans KR",radius:"둥글게",density:"넉넉하게",shadow:"옅게",anim:[],
+ parts:[],check:[],ref:[],tools:[],locks:[],checks:[],
+ verify:null,deploy:null,showDesc:false,openFolds:new Set()};
+const TXT=["title","purpose","pin","tprog","tcheck","tref","ttool","style","content"];
+const el={};const $=id=>document.getElementById(id);
+TXT.forEach(k=>el[k]=$("f_"+k));
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const on=arr=>arr.filter(x=>x.on).map(x=>x.t);
+const onFull=arr=>arr.filter(x=>x.on);
+
+/* ══════════ 위젯 ══════════ */
+function simpleChips(box,opts,set){
+  box.innerHTML="";
+  opts.forEach(o=>{
+    const c=document.createElement("button");c.className="chip"+(set.has(o)?" on":"");c.textContent=o;
+    c.onclick=()=>{set.has(o)?set.delete(o):set.add(o);c.classList.toggle("on",set.has(o));render();};
+    box.appendChild(c);
+  });
+}
+function singleChips(box,opts,key,allowNull){
+  box.innerHTML="";
+  opts.forEach(o=>{
+    const label=typeof o==="string"?o:o.label;
+    const code=(typeof o==="object"&&o.code)?o.code:null;
+    const c=document.createElement("button");c.className="chip"+(S[key]===label?" on":"");
+    c.dataset.label=label;
+    c.innerHTML=esc(label)+(code?'<code class="term">'+esc(code)+"</code>":"");
+    c.onclick=()=>{S[key]=(S[key]===label&&allowNull!==false)?null:label;
+      box.querySelectorAll(".chip").forEach(x=>x.classList.toggle("on",x.dataset.label===S[key]));render();};
+    box.appendChild(c);
+  });
+}
+function themeChips(){
+  const box=$("themeChips");box.innerHTML="";
+  THEMES.forEach(t=>{
+    const b=document.createElement("button");
+    b.className="theme"+(S.theme===t.label?" on":"");
+    b.innerHTML='<span class="sw2"><i style="background:'+t.p+'"></i><i style="background:'+t.a+'"></i></span><span>'+t.label+"</span>";
+    b.onclick=()=>{S.theme=t.label;S.primary=t.p;S.accent=t.a;S.bg=t.bg;S.tint=t.tint;
+      $("c_primary").value=t.p;$("c_accent").value=t.a;
+      themeChips();render();};
+    box.appendChild(b);
+  });
+}
+function listChips(box,key){
+  box.innerHTML="";
+  S[key].forEach(item=>{
+    const c=document.createElement("button");c.className="chip"+(item.on?" on":"");c.textContent=item.t;
+    c.onclick=()=>{item.on=!item.on;c.classList.toggle("on",item.on);render();};
+    box.appendChild(c);
+  });
+}
+function toggles(box,key,kind){
+  box.innerHTML="";
+  S[key].forEach(item=>{
+    const d=document.createElement("div");
+    d.className="tog"+(kind==="lock"?" lock":"")+(item.on?" on":" off");
+    d.innerHTML='<div class="sw"></div><span class="txt">'+esc(item.t)+
+      (item.code?'<code class="term">'+esc(item.code)+"</code>":"")+
+      (item.d?'<small>'+esc(item.d)+"</small>":"")+"</span>";
+    d.onclick=()=>{item.on=!item.on;
+      d.className="tog"+(kind==="lock"?" lock":"")+(item.on?" on":" off");render();
+      if(key==="anim")replayPreview();};
+    box.appendChild(d);
+  });
+  if(key==="locks")quickLock(box);
+}
+function drawParts(){
+  const bar=$("partsBar");bar.innerHTML="";
+  const mk=(t,cls,fn)=>{const b=document.createElement("button");b.textContent=t;if(cls)b.className=cls;b.onclick=fn;bar.appendChild(b);};
+  mk("모두 켜기",null,()=>{S.parts.forEach(x=>x.on=true);drawParts();render();});
+  mk("모두 끄기",null,()=>{S.parts.forEach(x=>x.on=false);drawParts();render();});
+  mk("ⓘ 설명 보기",S.showDesc?"on":null,()=>{S.showDesc=!S.showDesc;drawParts();drawAnim();});
+
+  const wrap=$("partsFolds");wrap.innerHTML="";
+  const used=new Set();PART_GROUPS.forEach(g=>g[1].forEach(n=>used.add(n)));
+  const groups=PART_GROUPS.map(g=>[g[0],S.parts.filter(x=>g[1].indexOf(x.t)>=0)]);
+  const rest=S.parts.filter(x=>!used.has(x.t));
+  if(rest.length)groups.push(["그 밖에",rest]);
+
+  groups.forEach(pair=>{
+    const name=pair[0],items=pair[1];
+    if(!items.length)return;
+    const det=document.createElement("details");det.className="fold";
+    det.open=S.openFolds.has(name);
+    det.addEventListener("toggle",()=>{det.open?S.openFolds.add(name):S.openFolds.delete(name);});
+    const nOn=items.filter(x=>x.on).length;
+    const sum=document.createElement("summary");
+    sum.innerHTML='<span><span class="arw">▶</span>'+esc(name)+'</span><span class="cnt">'+nOn+" / "+items.length+"</span>";
+    det.appendChild(sum);
+    const body=document.createElement("div");body.className="foldbody"+(S.showDesc?" showdesc":"");
+    items.forEach(item=>{
+      const t=document.createElement("div");
+      t.className="tog mini"+(item.on?" on":" off");
+      t.innerHTML='<div class="sw"></div><span class="txt">'+esc(item.t)+(item.d?'<small>'+esc(item.d)+"</small>":"")+"</span>";
+      t.onclick=()=>{item.on=!item.on;drawParts();render();};
+      body.appendChild(t);
+    });
+    det.appendChild(body);wrap.appendChild(det);
+  });
+}
+function drawAnim(){
+  const bar=$("animBar");bar.innerHTML="";
+  const mk=(t,cls,fn)=>{const b=document.createElement("button");b.textContent=t;if(cls)b.className=cls;b.onclick=fn;bar.appendChild(b);};
+  mk("모두 켜기",null,()=>{S.anim.forEach(x=>x.on=true);drawAnim();render();replayPreview();});
+  mk("모두 끄기",null,()=>{S.anim.forEach(x=>x.on=false);drawAnim();render();replayPreview();});
+  mk("ⓘ 설명 보기",S.showDesc?"on":null,()=>{S.showDesc=!S.showDesc;drawParts();drawAnim();});
+
+  const wrap=$("animFolds");wrap.innerHTML="";
+  const det=document.createElement("details");det.className="fold";
+  det.open=S.openFolds.has("움직임");
+  det.addEventListener("toggle",()=>{det.open?S.openFolds.add("움직임"):S.openFolds.delete("움직임");});
+  const nOn=S.anim.filter(x=>x.on).length;
+  const sum=document.createElement("summary");
+  sum.innerHTML='<span><span class="arw">▶</span>효과 펼치기 · 눌러서 용어 익히기</span><span class="cnt">'+nOn+" / "+S.anim.length+"</span>";
+  det.appendChild(sum);
+  const body=document.createElement("div");body.className="foldbody"+(S.showDesc?" showdesc":"");
+  S.anim.forEach(item=>{
+    const t=document.createElement("div");
+    t.className="tog mini"+(item.on?" on":" off");
+    t.innerHTML='<div class="sw"></div><span class="txt">'+esc(item.t)+
+      (item.code?'<code class="term">'+esc(item.code)+"</code>":"")+
+      (item.d?'<small>'+esc(item.d)+"</small>":"")+"</span>";
+    t.onclick=()=>{item.on=!item.on;drawAnim();render();replayPreview();};
+    body.appendChild(t);
+  });
+  det.appendChild(body);wrap.appendChild(det);
+}
+function quickLock(box){
+  const q=document.createElement("div");q.className="chips";q.style.marginTop="8px";
+  QUICK_LOCK.forEach(t=>{
+    const has=S.locks.some(x=>x.t===t);
+    const c=document.createElement("button");
+    c.className="chip"+(has?" on":"");c.style.cssText="font-size:11.5px;padding:5px 10px";
+    c.textContent=(has?"":"＋ ")+t;
+    c.onclick=()=>{const i=S.locks.findIndex(x=>x.t===t);
+      if(i>=0)S.locks.splice(i,1);else S.locks.push({t,on:true});
+      toggles($("tg_locks"),"locks","lock");render();};
+    q.appendChild(c);
+  });
+  box.appendChild(q);
+}
+["check","ref"].forEach(k=>{
+  $("add_"+k).addEventListener("keydown",e=>{
+    if(e.key==="Enter"&&e.target.value.trim()){
+      S[k].push({t:e.target.value.trim(),on:true});e.target.value="";
+      listChips($(k+"Chips"),k);render();}});
+});
+["locks","checks"].forEach(k=>{
+  $("add_"+k).addEventListener("keydown",e=>{
+    if(e.key==="Enter"&&e.target.value.trim()){
+      S[k].push({t:e.target.value.trim(),on:true});e.target.value="";
+      toggles($("tg_"+k),k,k==="locks"?"lock":"");render();}});
+});
+$("c_primary").addEventListener("input",e=>{S.primary=e.target.value.toUpperCase();S.theme=null;themeChips();render();});
+$("c_accent").addEventListener("input",e=>{S.accent=e.target.value.toUpperCase();S.theme=null;themeChips();render();});
+
+/* ══════════ 프리셋 ══════════ */
+function applyPreset(keepText){
+  const p=PRESETS[preset];
+  if(!keepText){el.tprog.value=p.tabs[0];el.tcheck.value=p.tabs[1];el.tref.value=p.tabs[2];el.ttool.value=p.tabs[3];}
+  S.unit=p.unit;S.segs=p.segs;
+  const th=THEMES.find(x=>x.label===p.theme)||THEMES[0];
+  S.theme=th.label;S.primary=th.p;S.accent=th.a;S.bg=th.bg;S.tint=th.tint;
+  S.font="Noto Sans KR";S.radius="둥글게";S.density="넉넉하게";S.shadow="옅게";
+  S.anim=ANIM.map(x=>({t:x[0],code:x[1],d:x[2],on:true}));
+  S.parts=PARTS.map(x=>({t:x[0],d:x[1],on:true}));
+  S.check=p.check.map(t=>({t,on:true}));
+  S.ref=p.ref.map(t=>({t,on:true}));
+  S.tools=p.tools.map(t=>({t,on:true}));
+  S.locks=p.locks.map(t=>({t,on:true}));
+  S.checks=BASE_CHECKS.map(t=>({t,on:true}));
+  S.risks=new Set();
+  drawAll();
+}
+function drawAll(){
+  simpleChips($("useChips"),USE,S.use);
+  simpleChips($("whenChips"),WHEN,S.when);
+  singleChips($("unitChips"),UNITS,"unit");
+  singleChips($("segChips"),SEGS,"segs");
+  singleChips($("deployChips"),DEPLOY,"deploy");
+  singleChips($("verifyChips"),VERIFY,"verify");
+  singleChips($("fontChips"),FONTS,"font",false);
+  singleChips($("radiusChips"),RADIUS,"radius",false);
+  singleChips($("densityChips"),DENSITY,"density",false);
+  singleChips($("shadowChips"),SHADOW,"shadow",false);
+  drawAnim();
+  themeChips();
+  $("c_primary").value=S.primary;$("c_accent").value=S.accent;
+  drawParts();
+  listChips($("checkChips"),"check");
+  listChips($("refChips"),"ref");
+  listChips($("toolChips"),"tools");
+  toggles($("tg_locks"),"locks","lock");
+  toggles($("tg_checks"),"checks","");
+  drawRisks();
+}
+function drawRisks(){
+  const p=PRESETS[preset];
+  $("riskQ").textContent=p.riskQ;
+  const box=$("riskChips");box.innerHTML="";
+  Object.keys(p.risks).forEach(k=>{
+    const c=document.createElement("button");c.className="chip"+(S.risks.has(k)?" on":"");c.textContent=k;
+    c.onclick=()=>{S.risks.has(k)?S.risks.delete(k):S.risks.add(k);
+      c.classList.toggle("on",S.risks.has(k));syncRiskMap();render();};
+    box.appendChild(c);
+  });
+  syncRiskMap();
+}
+function syncRiskMap(){
+  const m=$("riskMap"),p=PRESETS[preset];
+  if(!S.risks.size){m.classList.remove("show");m.innerHTML="";return;}
+  m.classList.add("show");
+  m.innerHTML=[...S.risks].map(k=>"<b>"+esc(k)+"</b> → "+esc(p.risks[k])).join("<br>");
+}
+const pWrap=$("presets");
+Object.keys(PRESETS).forEach(name=>{
+  const b=document.createElement("button");
+  b.className="preset"+(name===preset?" on":"");b.textContent=name;
+  b.onclick=()=>{preset=name;
+    document.querySelectorAll(".preset").forEach(x=>x.classList.remove("on"));b.classList.add("on");
+    applyPreset(false);render();};
+  pWrap.appendChild(b);
+});
+
+const STN=["설계","모양","진단","내용","잠금","검증"];
+const stWrap=$("stations");
+STN.forEach(s=>{const d=document.createElement("div");d.className="stn";
+  d.innerHTML='<i></i><u>'+s+'</u>';stWrap.appendChild(d);});
+const progLine=document.createElement("div");progLine.className="prog";
+stWrap.insertBefore(progLine,stWrap.firstChild);
+
+/* ══════════ 색 미리보기 ══════════ */
+function radiusPx(){return S.radius==="둥글게"?16:S.radius==="살짝"?8:4;}
+function fontCss(){
+  return S.font==="Noto Sans KR"?"'Noto Sans KR',sans-serif":
+         S.font==="Pretendard"?"'Pretendard Variable',Pretendard,sans-serif":
+         S.font==="고운돋움"?"'Gowun Dodum',serif":"system-ui,-apple-system,sans-serif";}
+function shadowCss(){return S.shadow==="없음"?"none":S.shadow==="뚜렷하게"?"0 4px 12px rgba(0,0,0,.13)":"0 1px 3px rgba(0,0,0,.09)";}
+function animOn(t){return S.anim.some(x=>x.t===t&&x.on);}
+function renderPreview(){
+  const r=radiusPx(),pad=S.density==="넉넉하게"?"16px":"10px",gap=S.density==="넉넉하게"?"10px":"6px";
+  const ff=fontCss(),tr=animOn("부드러운 전환")?"all .2s ease":"none";
+  const pv=$("preview");
+  pv.style.background=S.bg;pv.style.fontFamily=ff;
+  $("pv_bar").style.cssText="font-family:"+ff+";padding:"+(S.density==="넉넉하게"?"11px":"8px")+" 11px;display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;background:"+S.tint+";color:"+S.accent+";transition:"+tr;
+  const btn=$("pv_btn");
+  btn.className=animOn("버튼 눌림")?"pv-press":"";
+  btn.style.cssText="font-family:"+ff+";background:#fff;color:"+S.accent+";border:1px solid "+S.accent+"33;padding:4px 10px;border-radius:"+(r>=16?"999px":r+"px")+";transition:"+tr;
+  $("pv_body").style.cssText="padding:"+pad+" 11px;display:flex;flex-direction:column;gap:"+gap+";font-family:"+ff;
+  const pills=$("pv_pills");pills.innerHTML="";
+  ["1일차","2일차","3일차"].forEach((t,i)=>{
+    const el2=document.createElement("span");el2.textContent=t;
+    el2.style.cssText="font-family:"+ff+";font-size:10px;font-weight:700;padding:5px 10px;border-radius:"+(r>=16?"999px":r+"px")+";transition:"+tr+";"+
+      (i===0?"background:"+S.primary+";color:#fff;box-shadow:"+shadowCss():"background:#fff;color:#6B7280;border:1px solid #E5E7EB");
+    pills.appendChild(el2);
+  });
+  $("pv_card").style.cssText="font-family:"+ff+";padding:"+pad+";border:1px solid "+S.primary+"22;background:#fff;border-radius:"+r+"px;box-shadow:"+shadowCss()+";transition:"+tr;
+  $("pv_time").style.cssText="color:"+S.primary+";font-size:"+(S.density==="넉넉하게"?"13px":"11.5px")+";display:block;margin-bottom:3px;font-weight:700";
+  const bar=$("pv_prog");bar.style.borderRadius=(r>=16?"999px":r+"px");
+  const fill=bar.firstElementChild;
+  fill.style.background=S.primary;fill.style.borderRadius=bar.style.borderRadius;
+  if(!fill.style.width)fill.style.width="62%";
+  $("hex_primary").textContent=S.primary;
+  $("hex_accent").textContent=S.accent;
+}
+function replayPreview(){
+  const card=$("pv_card"),fill=$("pv_prog").firstElementChild;
+  card.classList.remove("pv-fade","pv-slide","pv-shake");void card.offsetWidth;
+  if(animOn("아래에서 올라오기"))card.classList.add("pv-slide");
+  else if(animOn("화면 나타남"))card.classList.add("pv-fade");
+  else if(animOn("중요 항목 흔들림"))card.classList.add("pv-shake");
+  fill.style.transition="none";fill.style.width="0";void fill.offsetWidth;
+  fill.style.transition=animOn("진행률 차오름")?"width .9s cubic-bezier(.2,.8,.2,1)":"none";
+  fill.style.width="62%";
+}
+
+/* ══════════ 문서 생성 ══════════ */
+const v=k=>el[k].value.trim();
+function tabsLine(){return[v("tprog")||"진행",v("tcheck")||"점검",v("tref")||"참조",v("ttool")||"도구"];}
+function pick(list,label){const d=list.find(x=>x.label===label);return d?d.text:"";}
+function deploySpec(){return pick(DEPLOY,S.deploy);}
+function verifySpec(){return pick(VERIFY,S.verify)||"점검표로 스스로 확인해 주세요";}
+function colorLine(){
+  return "기본색 "+S.primary+" · 강조색 "+S.accent+" · 화면 배경 "+S.bg+" · 옅은 틴트 "+S.tint;
+}
+
+function buildMarkdown(){
+  const t=tabsLine(),g=S.gate;
+  let m="# "+(v("title")||"(앱 이름)")+" — 안내 앱 "+(g?"제작 하네스":"제작 프롬프트")+"\n\n";
+  if(g)m+="> 🚨 [먼저 읽어주세요] 이 문서를 받으면 오직 `1. 이해 확인` 단계만 쓰고 바로 멈춰 주세요. \"승인해 주시면 다음 단계로 넘어가겠습니다\"라고 말한 뒤 답변을 마칩니다.\n\n";
+  else m+="아래 조건에 맞는 안내 앱을 만들어 주세요. 파일 하나짜리 HTML입니다.\n\n";
+  m+="## 🎯 만들 것\n"+(v("purpose")||"(이 앱이 하는 일 한 줄)")+"\n\n";
+  m+="## 👥 누가 언제 쓰나\n";
+  if(S.use.size)m+="- 사용자: "+[...S.use].join(", ")+"\n";
+  if(S.when.size)m+="- 사용 상황: "+[...S.when].join(", ")+"\n";
+  if(v("pin"))m+="- 가장 급할 때 필요한 정보: **"+v("pin")+"** — 어느 화면에서나 눌리도록 상단에 고정해 주세요\n";
+  m+="\n## 🧭 화면 골격 — 네 칸\n상단 탭 네 개로 나눠 주세요.\n";
+  m+="1. **"+t[0]+"** — 순서가 있고 시간에 따라 변하는 것\n";
+  m+="2. **"+t[1]+"** — 체크하면 진행률이 쌓이는 것\n";
+  m+="3. **"+t[2]+"** — 변하지 않는 사실·번호·주소\n";
+  m+="4. **"+t[3]+"** — 그 상황에서만 필요한 도구\n\n";
+  m+="## 🎨 디자인 — 색상값 그대로 써 주세요\n";
+  m+="- "+colorLine()+"\n";
+  m+="- 강조색은 지금 진행 중인 항목·급한 정보·중요 표시에만 쓰고, 넓은 면적에는 쓰지 말아 주세요\n";
+  m+="- 이 네 값 밖의 색은 회색 계열 말고는 쓰지 말아 주세요\n";
+  m+="- 글꼴: "+pick(FONTS,S.font)+"\n";
+  m+="- 모서리: "+pick(RADIUS,S.radius)+"\n";
+  m+="- 여백: "+pick(DENSITY,S.density)+"\n";
+  m+="- 그림자: "+pick(SHADOW,S.shadow)+"\n";
+  if(onFull(S.anim).length){
+    m+="\n**움직임** — 아래는 각각 실제 코드에서 쓰는 이름입니다.\n";
+    onFull(S.anim).forEach(x=>m+="- "+x.t+" (`"+x.code+"`) — "+x.d+"\n");}
+  STRUCT_RULES.forEach(x=>m+="- "+x+"\n");
+  if(v("style"))m+="\n아래 스타일을 그대로 따라 주세요.\n```css\n"+v("style")+"\n```\n";
+  m+="\n";
+  if(S.risks.size){
+    m+="## 🩺 현장에서 걱정되는 지점과 대응\n";
+    [...S.risks].forEach(k=>m+="- "+k+" → "+PRESETS[preset].risks[k]+"\n");m+="\n";}
+  m+="## 🧱 "+t[0]+" 화면\n";
+  if(S.unit)m+="- 나누는 단위: "+S.unit+"\n";
+  if(S.segs)m+="- 구간 수: "+S.segs+"\n";
+  m+="- 화면 순서: 구간 선택 → 대표 카드 → 빠른 링크 → 세로 타임라인\n\n";
+  if(on(S.check).length)m+="## 📋 "+t[1]+" 화면\n분류: "+on(S.check).join(" / ")+"\n\n";
+  if(on(S.ref).length)m+="## 📎 "+t[2]+" 화면\n"+on(S.ref).map(x=>"- "+x).join("\n")+"\n\n";
+  if(on(S.tools).length)m+="## 🧰 "+t[3]+" 화면\n"+on(S.tools).map(x=>"- "+x).join("\n")+"\n\n";
+  m+="## 🧩 화면 부품 — 이대로 넣어 주세요\n";
+  m+=(onFull(S.parts).map(x=>"- **"+x.t+"** — "+x.d).join("\n")||"- (부품을 골라 주세요)")+"\n\n";
+  m+="## 🔒 지어내지 않기 — 가장 중요한 규칙\n";
+  m+="아래 항목은 제가 준 값만 써 주세요. 값이 없으면 채우지 말고 `⬜확인필요`라고 적어 둔 뒤 저에게 물어봐 주세요.\n";
+  m+=(on(S.locks).map(x=>"- "+x).join("\n")||"- (잠글 항목을 골라 주세요)")+"\n";
+  m+=PLACEHOLDER_RULE+"\n"+MAP_RULE+"\n\n";
+  m+="## 📮 "+(g?"2단계에서 해 주실 것":"먼저 해 주실 것")+" — 제가 모아 올 값 목록\n"+LINK_REQ+"\n\n";
+  m+="## 📦 산출물 규격\n- 파일 한 개의 HTML로 만들어 주세요. `<script>`와 `<style>`을 안에 두고 외부 파일로 나누지 말아 주세요.\n";
+  if(deploySpec())m+="- "+deploySpec()+"\n";
+  m+="\n## 🗂 데이터 구조 — 이대로 지켜 주세요\n";
+  m+="내용과 화면을 반드시 나눠 주세요. 내용은 아래 두 덩어리에만 넣고, 화면을 그리는 함수는 `renderTimeline()` / `renderChecklist()` 두 개면 충분합니다.\n\n";
+  m+="```js\n"+DATA_CONTRACT+"\n```\n\n";
+  m+="항목을 하나 더 넣을 때 HTML을 손대야 한다면 구조가 잘못된 것입니다. 선택 항목(`mapUrl`,`link`,`highlight`,`memoInput`)은 있으면 그려지고 없으면 안 그려지게 처리해 주세요.\n\n";
+  if(g){
+    m+="## 🔁 작업 절차 — 단계마다 제 승인을 받아 주세요\n";
+    PROC.forEach(p=>m+=p[0]+" "+p[1]+"\n");
+    m+="\n"+GATE+"\n\n";}
+  m+="## ✅ "+(g?"자가검증 점검표":"다 만든 뒤 확인해 주세요")+"\n";
+  m+=(on(S.checks).map(x=>"- [ ] "+x).join("\n")||"- (점검 항목을 골라 주세요)")+"\n";
+  m+="- 검증 방식: "+verifySpec()+"\n";
+  m+="\n## ✍️ 제가 채워 넣을 내용\n";
+  m+=(v("content")?"```\n"+v("content")+"\n```\n":"아직 전달하지 않았습니다. 값 목록을 먼저 뽑아 주시면 채워 드리겠습니다. 그때까지 값을 지어내지 말아 주세요.\n");
+  if(g)m+="\n---\n먼저 `1. 이해 확인`부터 시작하고, 끝나면 멈춰서 제 확인을 기다려 주세요.\n";
+  return m;
+}
+
+/* ══════════ 렌더 ══════════ */
+function render(){
+  renderPreview();
+  const t=tabsLine(),g=S.gate,ph=x=>'<span class="ph">'+x+'</span>';
+  const tag=(k,val)=>'<span class="tag"><b>'+esc(k)+'</b> '+esc(val)+'</span>';
+  const sw=(c,n)=>'<span class="swatch"><i style="background:'+c+'"></i>'+n+" "+c+"</span>";
+  const lis=(arr,cls,fb)=>arr.length?arr.map(x=>'<div class="'+cls+'">'+esc(x)+'</div>').join(""):'<div class="'+cls+'">'+ph(fb)+'</div>';
+
+  let h='<div class="h1">'+(v("title")?esc(v("title")):ph("(앱 이름)"))+' — 안내 앱 '+(g?"제작 하네스":"제작 프롬프트")+'</div>\n';
+  if(g)h+='<div class="gate">🚨 이 문서를 받으면 <b>1. 이해 확인</b>만 쓰고 바로 멈춰 주세요. 제 승인 전에는 다음으로 넘어가지 않기로 해요.</div>\n';
+  else h+='아래 조건에 맞는 안내 앱을 만들어 주세요. 파일 하나짜리 HTML입니다.\n';
+  h+='<div class="rule">──────────────────────</div>\n';
+  h+='<div class="h2">🎯 만들 것</div>'+(v("purpose")?esc(v("purpose")):ph("이 앱이 하는 일 한 줄"))+"\n\n";
+  h+='<div class="h2">👥 누가 언제 쓰나</div>';
+  h+=(S.use.size?tag("사용자",[...S.use].join(", ")):"")+(S.when.size?tag("상황",[...S.when].join(", ")):"")+(v("pin")?tag("고정 정보",v("pin")):"");
+  if(!S.use.size&&!S.when.size&&!v("pin"))h+=ph("사용자와 상황을 골라 주세요");
+  h+="\n\n";
+  h+='<div class="h2">🧭 화면 골격 — 네 칸</div>'+tag("①",t[0])+tag("②",t[1])+tag("③",t[2])+tag("④",t[3])+"\n\n";
+  h+='<div class="h2">🎨 디자인 — 색상값 그대로 써 주세요</div>';
+  h+=sw(S.primary,"기본")+sw(S.accent,"강조")+sw(S.bg,"배경")+sw(S.tint,"틴트")+"\n";
+  h+='<div class="li">강조색은 진행 중인 항목·급한 정보·중요 표시에만 쓰고 넓은 면적에는 쓰지 않기</div>';
+  h+='<div class="li">글꼴: '+esc(pick(FONTS,S.font))+"</div>";
+  h+='<div class="li">모서리: '+esc(pick(RADIUS,S.radius))+"</div>";
+  h+='<div class="li">여백: '+esc(pick(DENSITY,S.density))+"</div>";
+  h+='<div class="li">그림자: '+esc(pick(SHADOW,S.shadow))+"</div>";
+  onFull(S.anim).forEach(x=>h+='<div class="li">움직임 · '+esc(x.t)+" <code>"+esc(x.code)+"</code> — "+esc(x.d)+"</div>");
+  h+=STRUCT_RULES.map(x=>'<div class="li">'+esc(x)+"</div>").join("");
+  if(v("style"))h+='<div class="code">'+esc(v("style"))+"</div>";
+  h+="\n";
+  if(S.risks.size)h+='<div class="h2">🩺 현장에서 걱정되는 지점과 대응</div>'+
+    [...S.risks].map(k=>'<div class="li">'+esc(k)+" → "+esc(PRESETS[preset].risks[k])+"</div>").join("")+"\n";
+  h+='<div class="h2">🧱 '+esc(t[0])+' 화면</div>'+(S.unit?tag("단위",S.unit):"")+(S.segs?tag("구간",S.segs):"");
+  if(!S.unit&&!S.segs)h+=ph("단위와 구간 수를 골라 주세요");
+  h+="\n\n";
+  if(on(S.check).length)h+='<div class="h2">📋 '+esc(t[1])+' 화면</div>'+on(S.check).map(x=>tag("분류",x)).join("")+"\n\n";
+  if(on(S.ref).length)h+='<div class="h2">📎 '+esc(t[2])+' 화면</div>'+lis(on(S.ref),"li","")+"\n";
+  if(on(S.tools).length)h+='<div class="h2">🧰 '+esc(t[3])+' 화면</div>'+lis(on(S.tools),"li","")+"\n";
+  h+='<div class="h2">🧩 화면 부품 — 이대로 넣어 주세요</div>';
+  h+=(onFull(S.parts).length?onFull(S.parts).map(x=>'<div class="li"><b>'+esc(x.t)+"</b> — "+esc(x.d)+"</div>").join("")
+    :'<div class="li">'+ph("부품을 골라 주세요")+"</div>")+"\n";
+  h+='<div class="h2">🔒 지어내지 않기</div>';
+  h+='<div class="lockbox">아래 값은 제가 준 것만 써 주세요. 없으면 <b>⬜확인필요</b>라고 적어 두고 물어봐 주세요. <b>href·tel·url 속성 안에는 자리표시자를 넣지 않기</b> — 링크 값이 없으면 버튼을 그리지 않습니다. 그리고 <b>지도 cid 같은 긴 숫자 ID는 절대 만들어 내지 않기</b> — 지어내면 엉뚱한 장소로 갑니다.</div>';
+  h+=lis(on(S.locks),"neg","잠글 항목을 골라 주세요")+"\n";
+  h+='<div class="h2">📮 '+(g?"2단계에서 해 주실 것":"먼저 해 주실 것")+' — 제가 모아 올 값 목록</div>';
+  h+='<div class="gate">'+esc(LINK_REQ)+"</div>\n";
+  h+='<div class="h2">📦 산출물 규격</div><div class="li">파일 한 개의 HTML로 만들기</div>';
+  h+=(deploySpec()?'<div class="li">'+esc(deploySpec())+"</div>":'<div class="li">'+ph("어디에 쓸 파일인지 골라 주세요")+"</div>")+"\n";
+  h+='<div class="h2">🗂 데이터 구조 — 이대로 지켜 주세요</div><div class="code">'+esc(DATA_CONTRACT)+"</div>";
+  h+='내용을 늘릴 때 HTML을 손대야 한다면 구조가 잘못된 것입니다.\n\n';
+  if(g){
+    h+='<div class="h2">🔁 작업 절차 — 승인 게이트</div>';
+    h+=PROC.map(p=>'<div class="li"><b>'+esc(p[0])+"</b> "+esc(p[1])+"</div>").join("");
+    h+='<div class="gate">'+esc(GATE)+"</div>\n";}
+  h+='<div class="h2">✅ '+(g?"자가검증 점검표":"다 만든 뒤 확인해 주세요")+'</div>'+lis(on(S.checks),"li","점검 항목을 골라 주세요");
+  h+='<div class="li">검증 방식: '+esc(verifySpec())+"</div>\n";
+  h+='<div class="h2">✍️ 제가 채워 넣을 내용</div>'+(v("content")?esc(v("content")):ph("값 목록을 먼저 받고 채웁니다 — 그때까지 지어내지 않기"));
+  h+='\n<div class="rule">──────────────────────</div>';
+  $("doc").innerHTML=h;
+
+  $("fname").textContent=g?"GUIDE-APP-HARNESS.md":"GUIDE-APP.md";
+  $("docNote").innerHTML=g
+    ?'통째로 복사해 <b>AI 대화창의 첫 메시지</b>로 붙여넣으세요. AI가 1단계를 마치고 멈추면 <b>「승인」 또는 「수정 요청」</b>을 보내며 이어갑니다. 되돌리는 비용이 크거나 학생에게 그대로 나갈 결과물일 때 이 모드를 쓰세요.'
+    :'통째로 복사해 <b>AI 대화창의 첫 메시지</b>로 붙여넣으세요. AI가 <b>모아 올 값 목록</b>을 표로 먼저 줄 겁니다. 지도 링크와 시각을 채워 다시 보내면 완성본이 나와요. 프롬프트가 해주는 건 잘 짜인 80%까지고, 나머지는 값과 두세 번의 수정입니다.';
+
+  const done=[
+    !!v("title")&&!!v("purpose")&&S.use.size>0,
+    !!v("tprog")&&!!v("tcheck")&&!!v("tref")&&!!v("ttool")&&!!S.font&&!!S.radius,
+    S.risks.size>0,
+    !!S.unit&&!!S.segs&&onFull(S.parts).length>0&&on(S.check).length>0&&on(S.ref).length>0,
+    on(S.locks).length>0&&!!S.deploy,
+    on(S.checks).length>0&&!!S.verify
+  ];
+  done.forEach((d,i)=>{
+    const st=$("st"+(i+1));st.classList.toggle("done",d);
+    st.querySelector(".dot").textContent=d?"✓":String(i+1);
+    stWrap.querySelectorAll(".stn")[i].classList.toggle("on",d);
+  });
+  const n=done.filter(Boolean).length,pct=Math.round(n/6*100);
+  $("partsCnt").textContent=onFull(S.parts).length+" / "+S.parts.length+" 켜짐";
+  $("animCnt").textContent=onFull(S.anim).length+" / "+S.anim.length+" 켜짐";
+  $("checksCnt").textContent=on(S.checks).length+" / "+S.checks.length;
+  $("stepCount").textContent=n+" / 6 역";
+  $("pct").textContent=pct+"%";
+  progLine.style.width=(n?((n-1)/5*100):0)+"%";
+  $("rfill").style.height=pct+"%";
+  $("hint").textContent=
+    pct===100?"완성 ✔ 붙여넣되, 최종 확인은 선생님 몫입니다.":
+    n>=5?"거의 다 왔어요 — 마지막 역은 넘겨받기 전 확인입니다.":
+    n>=3?"좋아요 — 4번 역의 화면 부품을 빠뜨리면 밋밋해집니다.":
+    n>=1?"이어서 채워 보세요.":"1번 역부터 순서대로 채워 보세요.";
+  if(typeof store!=="undefined")store.set(snapshot());
+  const pk=$("peekBtn"),ds=document.querySelector(".doc-side");
+  if(pk&&ds&&!ds.classList.contains("open"))pk.textContent="📄 미리보기 · "+n+"/6";
+}
+TXT.forEach(k=>el[k].addEventListener("input",render));
+
+function setGate(on_){S.gate=on_;
+  $("modeOn").classList.toggle("on",on_);$("modeOff").classList.toggle("on",!on_);render();}
+$("replayBtn").onclick=replayPreview;
+$("modeOn").onclick=()=>setGate(true);
+$("modeOff").onclick=()=>setGate(false);
+
+document.querySelectorAll(".etab").forEach(t=>{
+  t.onclick=()=>{const p=t.dataset.p,open_=t.classList.contains("on");
+    document.querySelectorAll(".etab").forEach(x=>x.classList.remove("on"));
+    document.querySelectorAll(".epanel").forEach(x=>x.classList.remove("on"));
+    if(!open_){t.classList.add("on");document.querySelector('.epanel[data-p="'+p+'"]').classList.add("on");}};
+});
+
+/* ══════════ 저장 ══════════ */
+const KEY="guide-app-builder-v7";
+const store={
+  get(){try{return localStorage.getItem(KEY)}catch(e){return null}},
+  set(x){try{localStorage.setItem(KEY,x)}catch(e){}},
+  del(){try{localStorage.removeItem(KEY)}catch(e){}}
+};
+function snapshot(){
+  const texts={};TXT.forEach(k=>texts[k]=el[k].value);
+  return JSON.stringify({preset,texts,gate:S.gate,
+    use:[...S.use],when:[...S.when],risks:[...S.risks],
+    unit:S.unit,segs:S.segs,verify:S.verify,deploy:S.deploy,
+    theme:S.theme,primary:S.primary,accent:S.accent,bg:S.bg,tint:S.tint,
+    font:S.font,radius:S.radius,density:S.density,shadow:S.shadow,anim:S.anim,
+    parts:S.parts,check:S.check,ref:S.ref,tools:S.tools,locks:S.locks,checks:S.checks});
+}
+function applyState(d){
+  preset=d.preset&&PRESETS[d.preset]?d.preset:preset;
+  document.querySelectorAll(".preset").forEach(b=>b.classList.toggle("on",b.textContent===preset));
+  TXT.forEach(k=>{if(d.texts&&k in d.texts)el[k].value=d.texts[k];});
+  S.use=new Set(d.use||[]);S.when=new Set(d.when||[]);S.risks=new Set(d.risks||[]);
+  S.unit=d.unit||null;S.segs=d.segs||null;
+  S.verify=d.verify||null;S.deploy=d.deploy||null;
+  S.theme=("theme"in d)?d.theme:S.theme;
+  S.primary=d.primary||S.primary;S.accent=d.accent||S.accent;
+  S.bg=d.bg||S.bg;S.tint=d.tint||S.tint;
+  S.font=d.font||"Noto Sans KR";S.radius=d.radius||"둥글게";S.density=d.density||"넉넉하게";
+  S.shadow=d.shadow||"옅게";
+  S.anim=d.anim&&d.anim.length?d.anim:ANIM.map(x=>({t:x[0],code:x[1],d:x[2],on:true}));
+  const p=PRESETS[preset];
+  S.parts=d.parts&&d.parts.length?d.parts:PARTS.map(x=>({t:x[0],d:x[1],on:true}));
+  S.check=d.check&&d.check.length?d.check:p.check.map(t=>({t,on:true}));
+  S.ref=d.ref&&d.ref.length?d.ref:p.ref.map(t=>({t,on:true}));
+  S.tools=d.tools&&d.tools.length?d.tools:p.tools.map(t=>({t,on:true}));
+  S.locks=d.locks&&d.locks.length?d.locks:p.locks.map(t=>({t,on:true}));
+  S.checks=d.checks&&d.checks.length?d.checks:BASE_CHECKS.map(t=>({t,on:true}));
+  drawAll();setGate(!!d.gate);
+}
+
+applyPreset(false);
+(function(){const raw=store.get();if(raw){try{applyState(JSON.parse(raw));return}catch(e){}}render();})();
+
+const SAMPLE={preset:"수학여행·현장체험",gate:false,
+ texts:{title:"2학년 수학여행 안내 (경주 2박 3일)",
+  purpose:"학생이 지금 어디로 가야 하는지 3초 안에 알게 하기",
+  pin:"인솔 교사 연락처",
+  tprog:"일정표",tcheck:"준비물",tref:"안전·연락처",ttool:"현장 도구",style:"",
+  content:"1일차\n08:00 | 집합 | 학교 운동장 | 조별 인원 확인 후 승차\n09:00 | 이동 | 학교 → 불국사 | 대절버스 2대, 약 2시간\n11:30 | 관람 | 불국사 | 조별 자유 관람, 12:40 정문 집합"},
+ use:["학생 각자의 휴대폰","인솔·담당 교사"],when:["이동 중 한 손으로","행사 당일 현장에서"],
+ risks:["학생이 집합 시각을 놓침","길을 잃거나 흩어짐"],
+ unit:"일차",segs:"3구간",verify:"점검표 O/X 채점",deploy:"웹에 올려 쓸 파일",
+ theme:"차분한 남색",primary:"#2563EB",accent:"#EF4444",bg:"#F8FAFC",tint:"#EFF6FF",
+ font:"Noto Sans KR",radius:"둥글게",density:"넉넉하게",shadow:"옅게"};
+$("sampleBtn").onclick=()=>{
+  const p=PRESETS["수학여행·현장체험"];
+  applyState(Object.assign({},JSON.parse(JSON.stringify(SAMPLE)),{
+    parts:PARTS.map(x=>({t:x[0],d:x[1],on:true})),
+    check:p.check.map(t=>({t,on:true})),ref:p.ref.map(t=>({t,on:true})),
+    tools:p.tools.map(t=>({t,on:true})),locks:p.locks.map(t=>({t,on:true})),
+    checks:BASE_CHECKS.map(t=>({t,on:true}))}));
+  $("sampleBtn").textContent="✨ 예시가 채워졌어요 — 자유롭게 고쳐보세요";
+  setTimeout(()=>$("sampleBtn").textContent="✨ 예시로 구경하기",2600);
+};
+$("clearBtn").onclick=()=>{store.del();
+  S.use.clear();S.when.clear();S.risks.clear();
+  S.unit=null;S.segs=null;S.verify=null;S.deploy=null;
+  applyPreset(false);
+  ["title","purpose","pin","style","content"].forEach(k=>el[k].value="");
+  setGate(false);};
+
+const docSide=document.querySelector(".doc-side"),peek=$("peekBtn");
+peek.onclick=()=>{const open_=docSide.classList.toggle("open");
+  peek.textContent=open_?"✕ 닫고 이어서 입력":"📄 미리보기";
+  if(!open_)render();};
+
+$("exportBtn").onclick=()=>{
+  const name=(el.title.value.trim()||"guide-app").replace(/[\\/:*?"<>|\s]+/g,"_").slice(0,40);
+  const b=new Blob([snapshot()],{type:"application/json;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name+"_설정.json";a.click();
+  URL.revokeObjectURL(a.href);};
+$("importBtn").onclick=()=>$("importFile").click();
+$("importFile").addEventListener("change",e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{applyState(JSON.parse(r.result));}
+    catch(err){alert("설정 파일을 읽지 못했어요. 이 앱에서 저장한 .json 파일이 맞는지 확인해 주세요.");}
+    e.target.value="";};
+  r.readAsText(f,"utf-8");});
+
+$("copyBtn").onclick=async()=>{
+  const b=$("copyBtn");
+  try{await navigator.clipboard.writeText(buildMarkdown());}
+  catch(e){const ta=document.createElement("textarea");ta.value=buildMarkdown();
+    document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();}
+  b.textContent="✔ 복사 완료";b.classList.add("done");
+  setTimeout(()=>{b.textContent="⧉ 전체 복사";b.classList.remove("done")},1800);};
+$("dlBtn").onclick=()=>{
+  const b=new Blob([buildMarkdown()],{type:"text/markdown;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);
+  a.download=S.gate?"GUIDE-APP-HARNESS.md":"GUIDE-APP.md";a.click();URL.revokeObjectURL(a.href);};
+</script>
+</body>
+</html>
